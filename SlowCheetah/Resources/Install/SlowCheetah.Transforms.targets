@@ -86,7 +86,12 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011. All rights reserved.
                   Transform="%(RelativeDir)%(Filename).$(Configuration)%(Extension)"
                   Destination="$(_AppConfigDest)"
                   Condition=" Exists('%(RelativeDir)%(Filename).$(Configuration)%(Extension)') " />
-
+    <!-- If there is a app.$(Configuration).user file execute that transform now -->
+    <SlowCheetah.Tasks.TransformXml Source="@(_AppConfigToTransform->'%(FullPath)')"
+                      Transform="%(RelativeDir)%(Filename).$(Configuration)%(Extension).user"
+                      Destination="$(_AppConfigDest)"
+                      Condition=" Exists('%(RelativeDir)%(Filename).$(Configuration)%(Extension).user') " />
+    
     <!-- 
     For link files this will write the transformed file into the 
     incorrect location so let's handle those seperately in the transformation underneath this one
@@ -96,6 +101,12 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011. All rights reserved.
                   Destination="@(_FilesToTransformNotAppConfig->'$(OutDir)%(RelativeDir)%(Filename)%(Extension)')"
                   Condition=" Exists('%(RelativeDir)%(Filename).$(Configuration)%(Extension)')
                               and '%(Link)'=='' " />
+    <!-- If there is a app.$(Configuration).user file execute that transform now -->
+    <SlowCheetah.Tasks.TransformXml Source="@(_FilesToTransformNotAppConfig->'%(FullPath)')"
+                  Transform="%(RelativeDir)%(Filename).$(Configuration)%(Extension).user"
+                  Destination="@(_FilesToTransformNotAppConfig->'$(OutDir)%(RelativeDir)%(Filename)%(Extension)')"
+                  Condition=" Exists('%(RelativeDir)%(Filename).$(Configuration)%(Extension).user')
+                              and '%(Link)'=='' " />
 
     <!-- Transform the Link files -->
     <SlowCheetah.Tasks.TransformXml Source="@(_FilesToTransformNotAppConfig->'%(FullPath)')"
@@ -103,13 +114,18 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011. All rights reserved.
                   Destination="@(_FilesToTransformNotAppConfig->'$(OutDir)%(Link)')"
                   Condition="Exists('%(RelativeDir)%(Filename).$(Configuration)%(Extension)')
                               and '%(Link)'!='' " />
+    <!-- If there is a app.$(Configuration).user file execute that transform now -->
+    <SlowCheetah.Tasks.TransformXml Source="@(_FilesToTransformNotAppConfig->'%(FullPath)')"
+                  Transform="%(RelativeDir)%(Filename).$(Configuration)%(Extension).user"
+                  Destination="@(_FilesToTransformNotAppConfig->'$(OutDir)%(Link)')"
+                  Condition="Exists('%(RelativeDir)%(Filename).$(Configuration)%(Extension).user')
+                              and '%(Link)'!='' " />
   </Target>
 
   <Target Name="DiscoverFilesToTransform">
     <!-- 
     This will look through items list: None & Content for those
-    with Metadata <TransformOnBuild>True</TransformOnBuild>.
-    
+    with Metadata <TransformOnBuild>True</TransformOnBuild>.    
     -->
     <ItemGroup>
       <_FilesToTransform Include="@(None);@(Content);@(Resource);@(EmbeddedResource)"
