@@ -86,7 +86,7 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011. All rights reserved.
                   Transform="%(RelativeDir)%(Filename).$(Configuration)%(Extension)"
                   Destination="$(_AppConfigDest)"
                   Condition=" Exists('%(RelativeDir)%(Filename).$(Configuration)%(Extension)') " />
-    <!-- If there is a app.$(Configuration).user file execute that transform now -->
+    <!-- If there is a app.$(Configuration).config.user file execute that transform now -->
     <SlowCheetah.Tasks.TransformXml Source="@(_AppConfigToTransform->'%(FullPath)')"
                       Transform="%(RelativeDir)%(Filename).$(Configuration)%(Extension).user"
                       Destination="$(_AppConfigDest)"
@@ -101,7 +101,7 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011. All rights reserved.
                   Destination="@(_FilesToTransformNotAppConfig->'$(OutDir)%(RelativeDir)%(Filename)%(Extension)')"
                   Condition=" Exists('%(RelativeDir)%(Filename).$(Configuration)%(Extension)')
                               and '%(Link)'=='' " />
-    <!-- If there is a app.$(Configuration).user file execute that transform now -->
+    <!-- If there is a app.$(Configuration).config.user file execute that transform now -->
     <SlowCheetah.Tasks.TransformXml Source="@(_FilesToTransformNotAppConfig->'%(FullPath)')"
                   Transform="%(RelativeDir)%(Filename).$(Configuration)%(Extension).user"
                   Destination="@(_FilesToTransformNotAppConfig->'$(OutDir)%(RelativeDir)%(Filename)%(Extension)')"
@@ -114,7 +114,7 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011. All rights reserved.
                   Destination="@(_FilesToTransformNotAppConfig->'$(OutDir)%(Link)')"
                   Condition="Exists('%(RelativeDir)%(Filename).$(Configuration)%(Extension)')
                               and '%(Link)'!='' " />
-    <!-- If there is a app.$(Configuration).user file execute that transform now -->
+    <!-- If there is a app.$(Configuration).config.user file execute that transform now -->
     <SlowCheetah.Tasks.TransformXml Source="@(_FilesToTransformNotAppConfig->'%(FullPath)')"
                   Transform="%(RelativeDir)%(Filename).$(Configuration)%(Extension).user"
                   Destination="@(_FilesToTransformNotAppConfig->'$(OutDir)%(Link)')"
@@ -206,6 +206,13 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011. All rights reserved.
               Condition=" '%(Filename)%(Extension)' != 'web.config' and
                           Exists('%(RelativeDir)%(Filename).$(Configuration)%(Extension)')
                           and '%(Link)'=='' " />
+    <!-- If there is a foo.$(Configuration).config.user file execute that transform now -->
+    <SlowCheetah.Tasks.TransformXml Source="@(_FilesToTransformNotAppConfig->'%(FullPath)')"
+              Transform="%(RelativeDir)%(Filename).$(Configuration)%(Extension).user"
+              Destination="@(_FilesToTransformNotAppConfig->'$(_PackageTempDir)\%(RelativeDir)%(Filename)%(Extension)')"
+              Condition=" '%(Filename)%(Extension)' != 'web.config' and
+                          Exists('%(RelativeDir)%(Filename).$(Configuration)%(Extension).user')
+                          and '%(Link)'=='' " />
 
     <!-- Transform the Link files, they always go into the root directory -->
     <SlowCheetah.Tasks.TransformXml Source="@(_FilesToTransformNotAppConfig->'%(FullPath)')"
@@ -214,6 +221,20 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011. All rights reserved.
               Condition=" '%(Filename)%(Extension)' != 'web.config' and
                           Exists('%(RelativeDir)%(Filename).$(Configuration)%(Extension)')
                           and '%(Link)'!='' " />
+    <!-- If there is a web.$(Configuration).config.user file execute that transform now -->
+    <SlowCheetah.Tasks.TransformXml Source="@(_FilesToTransformNotAppConfig->'%(FullPath)')"
+              Transform="%(RelativeDir)%(Filename).$(Configuration)%(Extension).user"
+              Destination="@(_FilesToTransformNotAppConfig->'$(_PackageTempDir)\%(Link)')"
+              Condition=" '%(Filename)%(Extension)' != 'web.config' and
+                          Exists('%(RelativeDir)%(Filename).$(Configuration)%(Extension),user')
+                          and '%(Link)'!='' " />
+
+    <!-- see if there is a web.$(Configuration).config.user file and if so do the transform -->
+    <SlowCheetah.Tasks.TransformXml Source="$(_PackageTempDir)\web.config"
+              Transform="$(MSBuildProjectDirectory)\web.$(Configuration).config.user"
+              Destination="@(_FilesToTransformNotAppConfig->'$(_PackageTempDir)\web.config')"
+              Condition=" '%(Filename)%(Extension)' != 'web.config' and
+                          Exists('$(MSBuildProjectDirectory)\web.$(Configuration).config.user')" />
   </Target>
 
   <!-- ***********************************************************
