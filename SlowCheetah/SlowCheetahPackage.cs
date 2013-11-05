@@ -19,9 +19,9 @@ using IOleServiceProvider = Microsoft.VisualStudio.OLE.Interop.IServiceProvider;
 using Process = System.Diagnostics.Process;
 using Microsoft.VisualStudio.ComponentModelHost;
 using NuGet.VisualStudio;
+using System.Windows.Forms;
 
-namespace SlowCheetah.VisualStudio
-{
+namespace SlowCheetah.VisualStudio {
     /// <summary>
     /// This is the class that implements the package exposed by this assembly.
     ///
@@ -42,10 +42,9 @@ namespace SlowCheetah.VisualStudio
     [ProvideMenuResource("Menus.ctmenu", 1)]
     [Guid(GuidList.guidSlowCheetahPkgString)]
     [ProvideAutoLoad("{f1536ef8-92ec-443c-9ed7-fdadf150da82}")]
-    [ProvideOptionPageAttribute(typeof(OptionsDialogPage), "Slow Cheetah", "General",100 ,101 ,true)]
+    [ProvideOptionPageAttribute(typeof(OptionsDialogPage), "Slow Cheetah", "General", 100, 101, true)]
     [ProvideProfileAttribute(typeof(OptionsDialogPage), "Slow Cheetah", "General", 100, 101, true)]
-    public sealed class SlowCheetahPackage : Package
-    {
+    public sealed class SlowCheetahPackage : Package {
         public static readonly int IDYES = 6;
         private static readonly string TransformOnBuild = "TransformOnBuild";
         private static readonly string IsTransformFile = "IsTransformFile";
@@ -58,8 +57,7 @@ namespace SlowCheetah.VisualStudio
         /// not sited yet inside Visual Studio environment. The place to do all the other 
         /// initialization is the Initialize method.
         /// </summary>
-        public SlowCheetahPackage()
-        {
+        public SlowCheetahPackage() {
             this.LogMessageWriteLineFormat("Entering constructor for: {0}", this.ToString());
             OurPackage = this;
         }
@@ -72,8 +70,7 @@ namespace SlowCheetah.VisualStudio
         /// Initialization of the package; this method is called right after the package is sited, so this is the place
         /// where you can put all the initilaization code that rely on services provided by VisualStudio.
         /// </summary>
-        protected override void Initialize()
-        {
+        protected override void Initialize() {
             base.Initialize();
 
             this.LogMessageWriteLineFormat("SlowCheetah initalizing");
@@ -95,24 +92,23 @@ namespace SlowCheetah.VisualStudio
             }
 
             this.LogMessageWriteLineFormat(string.Format(CultureInfo.CurrentCulture, "Entering Initialize() of: {0}", this.ToString()));
-            
+
             // Add our command handlers for menu (commands must exist in the .vsct file)
             OleMenuCommandService mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
             if (null != mcs) {
                 // create the command for the "Add Transform" query status menu item
-                CommandID menuContextCommandID = new CommandID(GuidList.guidSlowCheetahCmdSet, (int) PkgCmdIDList.cmdidAddTransform);
+                CommandID menuContextCommandID = new CommandID(GuidList.guidSlowCheetahCmdSet, (int)PkgCmdIDList.cmdidAddTransform);
                 OleMenuCommand menuCommand = new OleMenuCommand(OnAddTransformCommand, OnChangeAddTransformMenu, OnBeforeQueryStatusAddTransformCommand, menuContextCommandID);
                 mcs.AddCommand(menuCommand);
 
                 // create the command for the Preview Transform menu item
-                menuContextCommandID = new CommandID(GuidList.guidSlowCheetahCmdSet, (int) PkgCmdIDList.cmdidPreviewTransform);
+                menuContextCommandID = new CommandID(GuidList.guidSlowCheetahCmdSet, (int)PkgCmdIDList.cmdidPreviewTransform);
                 menuCommand = new OleMenuCommand(OnPreviewTransformCommand, OnChangePreviewTransformMenu, OnBeforeQueryStatusPreviewTransformCommand, menuContextCommandID);
                 mcs.AddCommand(menuCommand);
             }
         }
 
-        protected override void Dispose(bool disposing)
-        {
+        protected override void Dispose(bool disposing) {
             if (this.TempFilesCreated != null && this.TempFilesCreated.Count > 0) {
                 foreach (string file in this.TempFilesCreated) {
                     try {
@@ -132,9 +128,8 @@ namespace SlowCheetah.VisualStudio
 
         #endregion
 
-        public DTE GetDTE()
-        {
-            return (DTE) Package.GetGlobalService(typeof(DTE));
+        public DTE GetDTE() {
+            return (DTE)Package.GetGlobalService(typeof(DTE));
         }
 
         private IList<string> TempFilesCreated { get; set; }
@@ -149,8 +144,7 @@ namespace SlowCheetah.VisualStudio
         /// </summary>
         /// <param name="sender">The menu that fired the event.</param>
         /// <param name="e">Not used.</param>
-        private void OnBeforeQueryStatusAddTransformCommand(object sender, EventArgs e)
-        {
+        private void OnBeforeQueryStatusAddTransformCommand(object sender, EventArgs e) {
             // get the menu that fired the event
             OleMenuCommand menuCommand = sender as OleMenuCommand;
             if (menuCommand != null) {
@@ -165,7 +159,7 @@ namespace SlowCheetah.VisualStudio
                     return;
                 }
 
-                IVsProject vsProject = (IVsProject) hierarchy;
+                IVsProject vsProject = (IVsProject)hierarchy;
                 if (!ProjectSupportsTransforms(vsProject)) {
                     return;
                 }
@@ -190,8 +184,7 @@ namespace SlowCheetah.VisualStudio
         /// </summary>
         /// <param name="sender">The menu that fired the event.</param>
         /// <param name="e">Not used.</param>
-        private void OnBeforeQueryStatusPreviewTransformCommand(object sender, EventArgs e)
-        {
+        private void OnBeforeQueryStatusPreviewTransformCommand(object sender, EventArgs e) {
             // get the menu that fired the event
             OleMenuCommand menuCommand = sender as OleMenuCommand;
             if (menuCommand != null) {
@@ -206,7 +199,7 @@ namespace SlowCheetah.VisualStudio
                     return;
                 }
 
-                IVsProject vsProject = (IVsProject) hierarchy;
+                IVsProject vsProject = (IVsProject)hierarchy;
                 if (!ProjectSupportsTransforms(vsProject)) {
                     return;
                 }
@@ -224,8 +217,7 @@ namespace SlowCheetah.VisualStudio
             }
         }
 
-        private bool IsItemTransformItem(IVsProject vsProject, uint itemid)
-        {
+        private bool IsItemTransformItem(IVsProject vsProject, uint itemid) {
             IVsBuildPropertyStorage buildPropertyStorage = vsProject as IVsBuildPropertyStorage;
             if (buildPropertyStorage == null) {
                 this.LogMessageWriteLineFormat("Error obtaining IVsBuildPropertyStorage from hierarcy.");
@@ -239,7 +231,7 @@ namespace SlowCheetah.VisualStudio
             if (string.Compare("true", value, true) == 0) {
                 isItemTransformFile = true;
             }
-            
+
             // we need to special case web.config transform files
             if (!isItemTransformFile) {
                 string pattern = @"web\..+\.config";
@@ -278,8 +270,7 @@ namespace SlowCheetah.VisualStudio
         /// </summary>
         /// <param name="items">A list of extensions separated by semi-colans. The items may be prefixed with the ".", but don't have to be.</param>
         /// <returns>The validated and culled list of extensions. The returned items all begin with a ".".</returns>
-        private string[] GetExtensionList(string items)
-        {
+        private string[] GetExtensionList(string items) {
             const string extensionPrefix = ".";
 
             List<string> list = new List<string>();
@@ -305,8 +296,7 @@ namespace SlowCheetah.VisualStudio
         /// See the Initialize method to see how the menu item is associated to this function using
         /// the OleMenuCommandService service and the MenuCommand class.
         /// </summary>
-        private void OnAddTransformCommand(object sender, EventArgs e)
-        {
+        private void OnAddTransformCommand(object sender, EventArgs e) {
             IVsHierarchy hierarchy = null;
             uint itemid = VSConstants.VSITEMID_NIL;
 
@@ -314,7 +304,7 @@ namespace SlowCheetah.VisualStudio
                 return;
             }
 
-            IVsProject vsProject = (IVsProject) hierarchy;
+            IVsProject vsProject = (IVsProject)hierarchy;
             if (!ProjectSupportsTransforms(vsProject)) {
                 return;
             }
@@ -329,7 +319,7 @@ namespace SlowCheetah.VisualStudio
             string installPath = Settings.Default.InstallPath;
             string targetsFilename = Settings.Default.TargetsFilename;
             string importPath = Path.Combine(localAppData, installPath, targetsFilename);
-            
+
             IVsBuildPropertyStorage buildPropertyStorage = vsProject as IVsBuildPropertyStorage;
             if (buildPropertyStorage == null) {
                 this.LogMessageWriteLineFormat("Error obtaining IVsBuildPropertyStorage from hierarcy.");
@@ -346,12 +336,11 @@ namespace SlowCheetah.VisualStudio
             if (ErrorHandler.Failed(vsProject.GetMkDocument(itemid, out itemFullPath))) {
                 return;
             }
-            
+
             // Save the project file
             IVsSolution solution = (IVsSolution)Package.GetGlobalService(typeof(SVsSolution));
             int hr = solution.SaveSolutionElement((uint)__VSSLNSAVEOPTIONS.SLNSAVEOPT_SaveIfDirty, hierarchy, 0);
-            if(Failed(hr))
-            {
+            if (Failed(hr)) {
                 throw new COMException(string.Format(Resources.Error_SavingProjectFile, itemFullPath, GetErrorInfo()), hr);
             }
             ProjectItem selectedProjectItem = GetProjectItemFromHierarchy(hierarchy, itemid);
@@ -379,12 +368,11 @@ namespace SlowCheetah.VisualStudio
                     transformsToCreate.AddRange(publishProfileTransforms);
                 }
 
-                foreach (string config in transformsToCreate)
-                {
+                foreach (string config in transformsToCreate) {
                     string itemName = string.Format(Resources.String_FormatTransformFilename, itemFilename, config, itemExtension);
                     AddXdtTransformFile(selectedProjectItem, content, itemName, itemFolder);
                     uint addedFileId;
-                    hierarchy.ParseCanonicalName(Path.Combine(itemFolder,itemName), out addedFileId);
+                    hierarchy.ParseCanonicalName(Path.Combine(itemFolder, itemName), out addedFileId);
                     buildPropertyStorage.SetItemAttribute(addedFileId, IsTransformFile, "True");
                 }
 
@@ -394,12 +382,12 @@ namespace SlowCheetah.VisualStudio
                         // fall back for those who do not have Nuget installed
                         AddSlowCheetahImport(projectFullPath, importPath);
                     }
-                }    
+                }
             }
         }
 
 
-        private List<string> GetPublishProfileTransforms(IVsHierarchy hierarchy,string projectPath) {
+        private List<string> GetPublishProfileTransforms(IVsHierarchy hierarchy, string projectPath) {
             if (hierarchy == null) { throw new ArgumentNullException("hierarchy"); }
             if (string.IsNullOrEmpty(projectPath)) { throw new ArgumentNullException("projectPath"); }
 
@@ -440,8 +428,7 @@ namespace SlowCheetah.VisualStudio
         /// See the Initialize method to see how the menu item is associated to this function using
         /// the OleMenuCommandService service and the MenuCommand class.
         /// </summary>
-        private void OnPreviewTransformCommand(object sender, EventArgs e)
-        {
+        private void OnPreviewTransformCommand(object sender, EventArgs e) {
             IVsHierarchy hierarchy = null;
             uint itemId = VSConstants.VSITEMID_NIL;
 
@@ -451,12 +438,12 @@ namespace SlowCheetah.VisualStudio
             }
 
             // make sure that the SlowCheetah project support has been added
-            IVsProject project = (IVsProject) hierarchy;
+            IVsProject project = (IVsProject)hierarchy;
             if (!ProjectSupportsTransforms(project)) {
                 // TODO: should add a dialog here telling the user that the preview failed because the targets are not yet installed
                 return;
             }
-            
+
             // get the full path of the configuration xdt
             string transformPath = null;
             if (ErrorHandler.Failed(project.GetMkDocument(itemId, out transformPath))) {
@@ -464,9 +451,9 @@ namespace SlowCheetah.VisualStudio
             }
 
             object value;
-            ErrorHandler.ThrowOnFailure(hierarchy.GetProperty(itemId, (int) __VSHPROPID.VSHPROPID_Parent, out value));
-            uint parentId = (uint) (int) value;
-            if (parentId == (uint) VSConstants.VSITEMID.Nil) {
+            ErrorHandler.ThrowOnFailure(hierarchy.GetProperty(itemId, (int)__VSHPROPID.VSHPROPID_Parent, out value));
+            uint parentId = (uint)(int)value;
+            if (parentId == (uint)VSConstants.VSITEMID.Nil) {
                 return;
             }
 
@@ -478,28 +465,15 @@ namespace SlowCheetah.VisualStudio
             PreviewTransform(hierarchy, documentPath, transformPath);
         }
 
-        private void AddSlowCheetahImport(string projectFullPath, string importPath)
-        {
-            // save and unload the project
-            DTE dte = GetDTE();
-
-            string solutionPath = dte.Solution.FullName;
-            dte.Solution.Close(true);
-
-            // add the import
-            try {
-                AddSlowCheetahImportToProject(projectFullPath, importPath);
-            }
-            catch (Exception ex) {
-                this.LogMessageWriteLineFormat("Exception thrown while trying to add the target import: Exception: {0}",ex);
-            }
-
-            // reload the solution
-            dte.Solution.Open(solutionPath);
+        private void AddSlowCheetahImport(string projectFullPath, string importPath) {
+            // the NuGet package was not able to be installed. Let the user know that he
+            // needs to instal that package and try again
+            string msg = @"Unable to install the SlowCheetah NuGet package. 
+            Check your internet connection and NuGet Package Manager settings, then try again";
+            MessageBox.Show(msg, "Unable to instal SlowCheetah NuGet package", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
 
-        public static bool IsSingleProjectItemSelection(out IVsHierarchy hierarchy, out uint itemid)
-        {
+        public static bool IsSingleProjectItemSelection(out IVsHierarchy hierarchy, out uint itemid) {
             hierarchy = null;
             itemid = VSConstants.VSITEMID_NIL;
             int hr = VSConstants.S_OK;
@@ -557,8 +531,7 @@ namespace SlowCheetah.VisualStudio
             }
         }
 
-        private bool ProjectSupportsTransforms(IVsProject project)
-        {
+        private bool ProjectSupportsTransforms(IVsProject project) {
             string projectFullPath = null;
 
             if (ErrorHandler.Failed(project.GetMkDocument(VSConstants.VSITEMID_ROOT, out projectFullPath))) {
@@ -576,8 +549,7 @@ namespace SlowCheetah.VisualStudio
             return false;
         }
 
-        private bool ItemSupportsTransforms(IVsProject project, uint itemid)
-        {
+        private bool ItemSupportsTransforms(IVsProject project, uint itemid) {
             string itemFullPath = null;
 
             if (ErrorHandler.Failed(project.GetMkDocument(itemid, out itemFullPath))) {
@@ -588,7 +560,7 @@ namespace SlowCheetah.VisualStudio
             // make sure its not a transform file itsle
             bool isTransformFile = IsItemTransformItem(project, itemid);
 
-            
+
             FileInfo transformFileInfo = new FileInfo(itemFullPath);
             bool isWebConfig = string.Compare("web.config", transformFileInfo.Name, StringComparison.OrdinalIgnoreCase) == 0;
 
@@ -601,7 +573,7 @@ namespace SlowCheetah.VisualStudio
 
         string[] s_supportedProjectExtensions;
 
-        
+
 
         private bool IsExtensionSupportedForFile(string filepath) {
             if (string.IsNullOrWhiteSpace(filepath)) { throw new ArgumentNullException("filepath"); }
@@ -610,7 +582,7 @@ namespace SlowCheetah.VisualStudio
             }
 
             FileInfo fi = new FileInfo(filepath);
-            
+
             var isExcludedQuery = from extension in this.GetExcludedExtensions()
                                   where string.Compare(fi.Extension, extension, StringComparison.OrdinalIgnoreCase) == 0
                                   select extension;
@@ -639,10 +611,8 @@ namespace SlowCheetah.VisualStudio
             return isXmlFile;
         }
 
-        public string[] SupportedProjectExtensions
-        {
-            get
-            {
+        public string[] SupportedProjectExtensions {
+            get {
                 if (s_supportedProjectExtensions == null) {
                     s_supportedProjectExtensions = GetSupportedExtensions(@"XdtTransforms\SupportedProjectExtensions");
                 }
@@ -653,10 +623,8 @@ namespace SlowCheetah.VisualStudio
 
         string[] s_supportedItemExtensions;
 
-        public string[] SupportedItemExtensions
-        {
-            get
-            {
+        public string[] SupportedItemExtensions {
+            get {
                 if (s_supportedItemExtensions == null) {
                     s_supportedItemExtensions = GetSupportedExtensions(@"XdtTransforms\SupportedItemExtensions");
                 }
@@ -665,18 +633,17 @@ namespace SlowCheetah.VisualStudio
             }
         }
 
-        private string[] GetSupportedExtensions(string rootKey)
-        {
-            IVsSettingsManager settingsManager = (IVsSettingsManager) GetService(typeof(SVsSettingsManager));
+        private string[] GetSupportedExtensions(string rootKey) {
+            IVsSettingsManager settingsManager = (IVsSettingsManager)GetService(typeof(SVsSettingsManager));
             IVsSettingsStore settings;
-            ErrorHandler.ThrowOnFailure(settingsManager.GetReadOnlySettingsStore((uint) __VsSettingsScope.SettingsScope_Configuration, out settings));
+            ErrorHandler.ThrowOnFailure(settingsManager.GetReadOnlySettingsStore((uint)__VsSettingsScope.SettingsScope_Configuration, out settings));
 
             uint count = 0;
             ErrorHandler.ThrowOnFailure(settings.GetSubCollectionCount(rootKey, out count));
 
             string[] supportedExtensions = new string[count];
 
-            for (uint i = 0 ; i != count ; ++i) {
+            for (uint i = 0; i != count; ++i) {
                 string keyName;
                 ErrorHandler.ThrowOnFailure(settings.GetSubCollectionName(rootKey, i, out keyName));
                 supportedExtensions[i] = keyName;
@@ -685,8 +652,7 @@ namespace SlowCheetah.VisualStudio
             return supportedExtensions;
         }
 
-        private void AddXdtTransformFile(ProjectItem selectedProjectItem, string content, string itemName, string projectPath)
-        {
+        private void AddXdtTransformFile(ProjectItem selectedProjectItem, string content, string itemName, string projectPath) {
             try {
                 string itemPath = Path.Combine(projectPath, itemName);
                 if (!File.Exists(itemPath)) {
@@ -707,15 +673,14 @@ namespace SlowCheetah.VisualStudio
                 if (buildPropertyStorage == null) {
                     this.LogMessageWriteLineFormat("Error obtaining IVsBuildPropertyStorage from hierarcy.");
                 }
-                
+
             }
             catch (Exception ex) {
                 this.LogMessageWriteLineFormat("AddTransformFile: Exception> " + ex.Message);
             }
         }
 
-        private string BuildXdtContent(string sourceItemPath)
-        {
+        private string BuildXdtContent(string sourceItemPath) {
             string content = Resources.TransformContents;
 
             try {
@@ -761,12 +726,11 @@ namespace SlowCheetah.VisualStudio
             return content;
         }
 
-        public string[] GetProjectConfigurations(EnvDTE.Project project)
-        {
+        public string[] GetProjectConfigurations(EnvDTE.Project project) {
             List<string> configurations = new List<string>();
 
             if (project != null && project.ConfigurationManager != null && project.ConfigurationManager.ConfigurationRowNames != null) {
-                foreach (object objConfigName in (object[]) project.ConfigurationManager.ConfigurationRowNames) {
+                foreach (object objConfigName in (object[])project.ConfigurationManager.ConfigurationRowNames) {
                     string configName = objConfigName as string;
                     if (!string.IsNullOrWhiteSpace(configName)) {
                         configurations.Add(configName);
@@ -777,8 +741,7 @@ namespace SlowCheetah.VisualStudio
             return configurations.ToArray();
         }
 
-        private bool ExistsInListIgnoreCase(string name, List<string> list)
-        {
+        private bool ExistsInListIgnoreCase(string name, List<string> list) {
             foreach (string value in list) {
                 if (string.Compare(name, value, true) == 0) {
                     return true;
@@ -788,10 +751,9 @@ namespace SlowCheetah.VisualStudio
             return false;
         }
 
-        private ProjectItem GetProjectItemFromHierarchy(IVsHierarchy pHierarchy, uint itemID)
-        {
+        private ProjectItem GetProjectItemFromHierarchy(IVsHierarchy pHierarchy, uint itemID) {
             object propertyValue;
-            ErrorHandler.ThrowOnFailure(pHierarchy.GetProperty(itemID, (int) __VSHPROPID.VSHPROPID_ExtObject, out propertyValue));
+            ErrorHandler.ThrowOnFailure(pHierarchy.GetProperty(itemID, (int)__VSHPROPID.VSHPROPID_ExtObject, out propertyValue));
             ProjectItem projectItem = propertyValue as ProjectItem;
             if (projectItem == null) {
                 this.LogMessageWriteLineFormat("ERROR: Item not found");
@@ -801,8 +763,7 @@ namespace SlowCheetah.VisualStudio
             return projectItem;
         }
 
-        private void PreviewTransform(IVsHierarchy hier, string sourceFile, string transformFile)
-        {
+        private void PreviewTransform(IVsHierarchy hier, string sourceFile, string transformFile) {
             if (string.IsNullOrWhiteSpace(sourceFile)) { throw new ArgumentNullException("sourceFile"); }
             if (string.IsNullOrWhiteSpace(transformFile)) { throw new ArgumentNullException("transformFile"); }
             if (!File.Exists(sourceFile)) { throw new FileNotFoundException(string.Format(CultureInfo.CurrentCulture, Resources.Error_SourceFileNotFound, sourceFile), sourceFile); }
@@ -811,7 +772,7 @@ namespace SlowCheetah.VisualStudio
             // Get our options
             using (OptionsDialogPage optionsPage = new OptionsDialogPage()) {
                 optionsPage.LoadSettingsFromStorage();
-                
+
                 this.LogMessageWriteLineFormat("SlowCheetah PreviewTransform");
                 FileInfo sourceFileInfo = new FileInfo(sourceFile);
                 // dest file
@@ -826,8 +787,7 @@ namespace SlowCheetah.VisualStudio
                 if (optionsPage.EnablePreview == false) {
                     GetDTE().ItemOperations.OpenFile(destFile);
                 }
-                else
-                {
+                else {
                     Guid SID_SVsDifferenceService = new Guid("{77115E75-EF9E-4F30-92F2-3FE78BCAF6CF}");
                     Guid IID_IVsDifferenceService = new Guid("{E20E53BE-8B7A-408F-AEA7-C0AAD6D1B946}");
                     uint VSDIFFOPT_RightFileIsTemporary = 0x00000020;   //The right file is a temporary file explicitly created for diff.
@@ -837,22 +797,20 @@ namespace SlowCheetah.VisualStudio
                     hier.GetSite(out sp);
                     IntPtr diffSvcIntPtr = IntPtr.Zero;
                     int hr = sp.QueryService(ref SID_SVsDifferenceService, ref IID_IVsDifferenceService, out diffSvcIntPtr);
-                    if(diffSvcIntPtr != IntPtr.Zero && (string.IsNullOrEmpty(optionsPage.PreviewToolExecutablePath) || optionsPage.PreviewToolExecutablePath.EndsWith(@"\diffmerge.exe", StringComparison.OrdinalIgnoreCase)))
-                    {
+                    if (diffSvcIntPtr != IntPtr.Zero && (string.IsNullOrEmpty(optionsPage.PreviewToolExecutablePath) || optionsPage.PreviewToolExecutablePath.EndsWith(@"\diffmerge.exe", StringComparison.OrdinalIgnoreCase))) {
                         try {
                             object diffSvc = Marshal.GetObjectForIUnknown(diffSvcIntPtr);
                             Type t = diffSvc.GetType();
-                            Type[] paramTypes = new Type[] {typeof(string), typeof(string), typeof(string), typeof(string), typeof(string), typeof(string), typeof(string), typeof(string), typeof(uint)};
+                            Type[] paramTypes = new Type[] { typeof(string), typeof(string), typeof(string), typeof(string), typeof(string), typeof(string), typeof(string), typeof(string), typeof(uint) };
                             MethodInfo openComparisonWindow2 = t.GetMethod("OpenComparisonWindow2", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, paramTypes, null);
                             Debug.Assert(openComparisonWindow2 != null);
-                            if(openComparisonWindow2 != null)
-                            {
+                            if (openComparisonWindow2 != null) {
                                 string sourceName = Path.GetFileName(sourceFile);
-                                string leftLabel = string.Format(CultureInfo.CurrentCulture,  Resources.TransformPreview_LeftLabel, sourceName);
+                                string leftLabel = string.Format(CultureInfo.CurrentCulture, Resources.TransformPreview_LeftLabel, sourceName);
                                 string rightLabel = string.Format(CultureInfo.CurrentCulture, Resources.TransformPreview_RightLabel, sourceName, Path.GetFileName(transformFile));
                                 string caption = string.Format(CultureInfo.CurrentCulture, Resources.TransformPreview_Caption, sourceName);
                                 string tooltip = string.Format(CultureInfo.CurrentCulture, Resources.TransformPreview_ToolTip, sourceName);
-                                object[] paras = new object[] {sourceFile, destFile,  caption, tooltip, leftLabel, rightLabel, null, null, VSDIFFOPT_RightFileIsTemporary};
+                                object[] paras = new object[] { sourceFile, destFile, caption, tooltip, leftLabel, rightLabel, null, null, VSDIFFOPT_RightFileIsTemporary };
                                 openComparisonWindow2.Invoke(diffSvc, paras);
                             }
                         }
@@ -860,16 +818,13 @@ namespace SlowCheetah.VisualStudio
                             Marshal.Release(diffSvcIntPtr);
                         }
                     }
-                    else if (string.IsNullOrEmpty(optionsPage.PreviewToolExecutablePath))
-                    {
+                    else if (string.IsNullOrEmpty(optionsPage.PreviewToolExecutablePath)) {
                         throw new FileNotFoundException(Resources.Error_NoPreviewToolSpecified);
                     }
-                    else if (!File.Exists(optionsPage.PreviewToolExecutablePath))
-                    {
+                    else if (!File.Exists(optionsPage.PreviewToolExecutablePath)) {
                         throw new FileNotFoundException(string.Format(Resources.Error_CantFindPreviewTool, optionsPage.PreviewToolExecutablePath), optionsPage.PreviewToolExecutablePath);
                     }
-                    else
-                    {
+                    else {
                         // Quote the filenames...
                         ProcessStartInfo psi = new ProcessStartInfo(optionsPage.PreviewToolExecutablePath, string.Format(optionsPage.PreviewToolCommandLine, "\"" + sourceFile + "\"", "\"" + destFile + "\""));
                         psi.CreateNoWindow = true;
@@ -884,8 +839,7 @@ namespace SlowCheetah.VisualStudio
             //          http://social.msdn.microsoft.com/Forums/en/vsx/thread/eb032063-eb4d-42e0-84e8-dec64bf42abf
         }
 
-        private string GetTempFilename(bool ensureFileDoesntExist, string extension = null)
-        {
+        private string GetTempFilename(bool ensureFileDoesntExist, string extension = null) {
             string path = Path.GetTempFileName();
 
             if (!string.IsNullOrWhiteSpace(extension)) {
@@ -910,11 +864,10 @@ namespace SlowCheetah.VisualStudio
             return path;
         }
 
-        private bool ValidateSlowCheetahTargetsAvailable(IVsBuildPropertyStorage buildPropertyStorage, string projectFullPath, string importPath, out bool addImports)
-        {
+        private bool ValidateSlowCheetahTargetsAvailable(IVsBuildPropertyStorage buildPropertyStorage, string projectFullPath, string importPath, out bool addImports) {
             addImports = false;
 
-            string importsExpression = string.Format("$({0})",Settings.Default.SlowCheetahTargets);
+            string importsExpression = string.Format("$({0})", Settings.Default.SlowCheetahTargets);
 #if USE_SLOWCHEETAH_TARGET_PROPERTY_FOR_IMPORT
             if (!IsSlowCheetahImported(buildPropertyStorage)) {
 #else
@@ -951,8 +904,7 @@ namespace SlowCheetah.VisualStudio
             return false;
         }
 #else
-        private bool IsSlowCheetahImported(string projectPath, string importPath)
-        {
+        private bool IsSlowCheetahImported(string projectPath, string importPath) {
             try {
                 string targetFilename = Path.GetFileName(importPath);
 
@@ -971,28 +923,8 @@ namespace SlowCheetah.VisualStudio
             return false;
         }
 #endif
-
-        /// <summary>
-        /// Adds the SlowCheetah import to the given proejct item.
-        /// </summary>
-        /// <param name="project"></param>
-        private void AddSlowCheetahImportToProject(string projectPath, string importPath)
-        {
-            ProjectRootElement projectRoot = ProjectRootElement.Open(projectPath);
-            // TODO: This should be passed into this method
-            string targetsPropertyName = Settings.Default.SlowCheetahTargets;
-
-            var propGroup = projectRoot.AddPropertyGroup();
-            ProjectPropertyElement ppe = propGroup.AddProperty(targetsPropertyName, string.Format(importPath));
-            ppe.Condition = string.Format(" '$({0})'=='' ",ppe.Name);
-
-            ProjectImportElement import = projectRoot.AddImport(string.Format("$({0})", targetsPropertyName));
-            import.Condition = string.Format("Exists('$({0})')",targetsPropertyName);
-            projectRoot.Save();
-        }
-
-        private bool HasUserAcceptedWarningMessage(string projectPath, string importPath)
-        {
+        
+        private bool HasUserAcceptedWarningMessage(string projectPath, string importPath) {
             IVsUIShell shell = GetService(typeof(SVsUIShell)) as IVsUIShell;
             if (shell != null) {
                 string message = Resources.String_AddImportText.Replace(@"\n", Environment.NewLine);
@@ -1008,8 +940,7 @@ namespace SlowCheetah.VisualStudio
             return false;
         }
 
-        public string GetVsInstallDirectory()
-        {
+        public string GetVsInstallDirectory() {
             string installDirectory = null;
 
             IVsShell shell = GetService(typeof(SVsShell)) as IVsShell;
@@ -1022,53 +953,82 @@ namespace SlowCheetah.VisualStudio
             }
             return installDirectory;
         }
-
+        
+        // If this method returns False then the NuGet package was not successfully installed
         private bool InstallSlowCheetahNuGetPackage(EnvDTE.Project project) {
-            bool installedPackage = true;
-            try {
-                
-                // this.LogMessageWriteLineFormat("Checking to see if the project has the
-                var componentModel = (IComponentModel)GetService(typeof(SComponentModel));
-                IVsPackageInstallerServices installerServices = componentModel.GetService<IVsPackageInstallerServices>();
-                if (!installerServices.IsPackageInstalled(project, pkgName)) {
+
+        bool wasPackageInstalledSuccessfully = true;
+        NuGet.SemanticVersion maxInstalledSlowCheetahVersion = null;
+        try {
+
+            // this.LogMessageWriteLineFormat("Checking to see if the project has the
+            var componentModel = (IComponentModel)GetService(typeof(SComponentModel));
+            IVsPackageInstallerServices installerServices = componentModel.GetService<IVsPackageInstallerServices>();
+            foreach (var pkg in installerServices.GetInstalledPackages()) {
+                if (string.Compare("SlowCheetah", pkg.Id, StringComparison.OrdinalIgnoreCase) == 0) {
+                    if (maxInstalledSlowCheetahVersion == null) { maxInstalledSlowCheetahVersion = pkg.Version; }
+
+                    if (pkg.Version.CompareTo(maxInstalledSlowCheetahVersion) > 0) {
+                        maxInstalledSlowCheetahVersion = pkg.Version;
+                    }
+                }
+            }
+
+                bool installSlowCheetahPackage = false;
+                if (maxInstalledSlowCheetahVersion == null) { 
+                    // install the package w/o the confirmation prompt
+                    installSlowCheetahPackage = true; 
+                }
+
+                if (maxInstalledSlowCheetahVersion != null &&
+                    maxInstalledSlowCheetahVersion.CompareTo(new NuGet.SemanticVersion("2.5.10.3")) < 0) {
+
+                    // let's prompt the user to install the latest version or not
+                    string msg = "You're SlowCheetah NuGet package is out of date. It's recommmended that you update to the latest. Do you want to upgrade the NuGet package";
+                    string caption = "SlowCheetah NuGet package update";
+                    DialogResult result = MessageBox.Show(msg, caption, MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                    if (result == DialogResult.OK || result == DialogResult.Yes) {
+                        installSlowCheetahPackage = true;
+                    }
+                    else {
+                        installSlowCheetahPackage = false;
+                    }
+                }
+
+                if (installSlowCheetahPackage) {
                     this.GetDTE().StatusBar.Text = "Installing SlowCheetah NuGet package, this may take a few seconds";
 
                     IVsPackageInstaller installer = (IVsPackageInstaller)componentModel.GetService<IVsPackageInstaller>();
-                    installer.InstallPackage("All", project, pkgName, (System.Version)null, false);                  
+                    installer.InstallPackage("All", project, pkgName, (System.Version)null, false);
 
                     this.GetDTE().StatusBar.Text = "Finished installing SlowCheetah NuGet package";
                 }
-
             }
             catch (Exception ex) {
-                installedPackage = false;
+                wasPackageInstalledSuccessfully = false;
                 this.LogMessageWriteLineFormat("Unable to install the SlowCheetah Nuget package. {0}", ex.ToString());
             }
 
-            return installedPackage;
+            return wasPackageInstalledSuccessfully;
         }
 
-        public static bool Succeeded(int hr)
-        {
-            return(hr >= 0);
+        public static bool Succeeded(int hr) {
+            return (hr >= 0);
         }
 
-        public static bool Failed(int hr)
-        {
-           return(hr < 0);
+        public static bool Failed(int hr) {
+            return (hr < 0);
         }
         /// <summary>
         /// Gets the error info set on the thread. Returns empty string is none set (not null)
         /// </summary>
-        public static string GetErrorInfo()
-        {
+        public static string GetErrorInfo() {
             string errText = null;
-            IVsUIShell uiShell = (IVsUIShell) Package.GetGlobalService(typeof(IVsUIShell));
-            if(uiShell != null)
-            {
+            IVsUIShell uiShell = (IVsUIShell)Package.GetGlobalService(typeof(IVsUIShell));
+            if (uiShell != null) {
                 uiShell.GetErrorInfo(out errText);
             }
-            if(errText == null)
+            if (errText == null)
                 return string.Empty;
             return errText;
         }
