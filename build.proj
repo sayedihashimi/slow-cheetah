@@ -55,6 +55,7 @@
   <PropertyGroup>
     <BuildDependsOn>
       $(BuildDependsOn);
+      Clean;
       PrepareForBuild;
       CoreBuild      
     </BuildDependsOn>
@@ -63,7 +64,7 @@
   <Target Name="Build" DependsOnTargets="$(BuildDependsOn)"/>
   <Target Name="CoreBuild">
     <MSBuild Projects="@(ProjectsToBuild)"
-             Properties="Configuration=$(Configuration);OutputPath=$(OutputRoot)" />
+             Properties="Configuration=$(Configuration);OutputPath=$(OutputRoot);RestorePackages=true" />
   </Target>
 
   <Target Name="PrepareForBuild">
@@ -147,13 +148,17 @@
     <NugetSourceFiles Include="$(NuGetSrc)**\*">
       <Dest>$(NuGetOutputRoot)%(RecursiveDir)%(Filename)%(Extension)</Dest>
     </NugetSourceFiles>
-    <NugetSourceFiles Include="$(SourceRoot)\SlowCheetah\Resources\Install\SlowCheetah.Tasks.dll">
+    <NugetSourceFiles Include="$(SourceRoot)\SlowCheetah\Resources\Install\Microsoft.Web.XmlTransform.dll">
+      <Dest>$(NuGetOutputRoot)tools\%(Filename)%(Extension)</Dest>
+    </NugetSourceFiles>
+    <NugetSourceFiles Include="$(SourceRoot)\SlowCheetah\Resources\Install\SlowCheetah.Xdt.dll">
       <Dest>$(NuGetOutputRoot)tools\%(Filename)%(Extension)</Dest>
     </NugetSourceFiles>
     <NugetSourceFiles Include="$(SourceRoot)\SlowCheetah\Resources\Install\SlowCheetah.Transforms.targets">
       <Dest>$(NuGetOutputRoot)tools\%(Filename)%(Extension)</Dest>
     </NugetSourceFiles>
-  </ItemGroup>
-  
-  
+    <NugetSourceFiles Include="$(SourceRoot)\SlowCheetah\Resources\Install\SlowCheetah.Transforms.targets">
+      <Dest>$(NuGetOutputRoot)content\Properties\SlowCheetah\%(Filename)%(Extension)</Dest>
+    </NugetSourceFiles>
+  </ItemGroup>    
 </Project>

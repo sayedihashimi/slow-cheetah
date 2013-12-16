@@ -19,6 +19,7 @@
     </SccAuxPath>
     <SccProvider>
     </SccProvider>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -28,6 +29,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -36,6 +38,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
     <AssemblyOriginatorKeyFile>Key.snk</AssemblyOriginatorKeyFile>
@@ -81,8 +84,10 @@
     <!---->
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="..\Resources\Install\SlowCheetah.Transforms.targets">
+      <Link>Resources\Install\SlowCheetah.Transforms.targets</Link>
+    </EmbeddedResource>
     <None Include="Key.snk" />
-    <EmbeddedResource Include="Resources\Install\SlowCheetah.Transforms.targets" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SlowCheetah.csproj">
@@ -91,11 +96,16 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\Install\Install-Manifest.xml" />
+    <EmbeddedResource Include="..\Resources\Install\Microsoft.Web.XmlTransform.dll">
+      <Link>Resources\Install\Microsoft.Web.XmlTransform.dll</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\Resources\Install\SlowCheetah.Xdt.dll">
+      <Link>Resources\Install\SlowCheetah.Xdt.dll</Link>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\Install\SlowCheetah.Tasks.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <EmbeddedResource Include="..\Resources\Install\Install-Manifest.xml">
+      <Link>Resources\Install\Install-Manifest.xml</Link>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

@@ -17,6 +17,8 @@ using SlowCheetah.VisualStudio.Exceptions;
 using SlowCheetah.VisualStudio.Properties;
 using IOleServiceProvider = Microsoft.VisualStudio.OLE.Interop.IServiceProvider;
 using Process = System.Diagnostics.Process;
+using Microsoft.VisualStudio.ComponentModelHost;
+using NuGet.VisualStudio;
 
 namespace SlowCheetah.VisualStudio
 {
@@ -48,6 +50,7 @@ namespace SlowCheetah.VisualStudio
         private static readonly string TransformOnBuild = "TransformOnBuild";
         private static readonly string IsTransformFile = "IsTransformFile";
         public static SlowCheetahPackage OurPackage { get; set; }
+        private string pkgName = Settings.Default.SlowCheetahNugetPkgName;
         /// <summary>
         /// Default constructor of the package.
         /// Inside this method you can place any initialization code that does not require 
@@ -242,11 +245,13 @@ namespace SlowCheetah.VisualStudio
                 string pattern = @"web\..+\.config";
                 string filepath;
                 buildPropertyStorage.GetItemAttribute(itemid, "FullPath", out filepath);
-                System.IO.FileInfo fi = new System.IO.FileInfo(filepath);               
-                System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex(
-                    pattern, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-                if (regex.IsMatch(fi.Name)) {
-                    isItemTransformFile = true;
+                if (!string.IsNullOrEmpty(filepath)) {
+                    System.IO.FileInfo fi = new System.IO.FileInfo(filepath);
+                    System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex(
+                        pattern, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                    if (regex.IsMatch(fi.Name)) {
+                        isItemTransformFile = true;
+                    }
                 }
             }
 
@@ -350,6 +355,7 @@ namespace SlowCheetah.VisualStudio
                 throw new COMException(string.Format(Resources.Error_SavingProjectFile, itemFullPath, GetErrorInfo()), hr);
             }
             ProjectItem selectedProjectItem = GetProjectItemFromHierarchy(hierarchy, itemid);
+            Project project = null;
             if (selectedProjectItem != null) {
                 // need to enure that this item has metadata TransformOnBuild set to true
                 if (buildPropertyStorage != null) {
@@ -381,12 +387,14 @@ namespace SlowCheetah.VisualStudio
                     hierarchy.ParseCanonicalName(Path.Combine(itemFolder,itemName), out addedFileId);
                     buildPropertyStorage.SetItemAttribute(addedFileId, IsTransformFile, "True");
                 }
-                
-                
-            }
 
-            if (addImports) {
-                AddSlowCheetahImport(projectFullPath, importPath);
+                if (addImports) {
+                    // AddSlowCheetahImport(projectFullPath, importPath);
+                    if (!this.InstallSlowCheetahNuGetPackage(selectedProjectItem.ContainingProject)) {
+                        // fall back for those who do not have Nuget installed
+                        AddSlowCheetahImport(projectFullPath, importPath);
+                    }
+                }    
             }
         }
 
@@ -1014,6 +1022,32 @@ namespace SlowCheetah.VisualStudio
             }
             return installDirectory;
         }
+
+        private bool InstallSlowCheetahNuGetPackage(EnvDTE.Project project) {
+            bool installedPackage = true;
+            try {
+                
+                // this.LogMessageWriteLineFormat("Checking to see if the project has the
+                var componentModel = (IComponentModel)GetService(typeof(SComponentModel));
+                IVsPackageInstallerServices installerServices = componentModel.GetService<IVsPackageInstallerServices>();
+                if (!installerServices.IsPackageInstalled(project, pkgName)) {
+                    this.GetDTE().StatusBar.Text = "Installing SlowCheetah NuGet package, this may take a few seconds";
+
+                    IVsPackageInstaller installer = (IVsPackageInstaller)componentModel.GetService<IVsPackageInstaller>();
+                    installer.InstallPackage("All", project, pkgName, (System.Version)null, false);                  
+
+                    this.GetDTE().StatusBar.Text = "Finished installing SlowCheetah NuGet package";
+                }
+
+            }
+            catch (Exception ex) {
+                installedPackage = false;
+                this.LogMessageWriteLineFormat("Unable to install the SlowCheetah Nuget package. {0}", ex.ToString());
+            }
+
+            return installedPackage;
+        }
+
         public static bool Succeeded(int hr)
         {
             return(hr >= 0);
