@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.30110.0
+VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D625B625-3C78-43C7-B285-8A2BFA9C3B6B}"
 	ProjectSection(SolutionItems) = preProject
@@ -13,12 +13,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NuGet", "NuGet", "{57D4810B-E372-489F-B24C-4FCB9DDE0683}"
 	ProjectSection(SolutionItems) = preProject
 		NuGet\SlowCheetah.nuspec = NuGet\SlowCheetah.nuspec
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{8A40F2BB-49F2-425C-857D-976C19A2BC92}"
-	ProjectSection(SolutionItems) = preProject
-		NuGet\tools\Install.ps1 = NuGet\tools\Install.ps1
-		NuGet\tools\SlowCheetah.NuGet.template.proj = NuGet\tools\SlowCheetah.NuGet.template.proj
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{C1BE92B2-B2A8-45C7-9DF9-B553A722054B}"
@@ -84,9 +78,6 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{8A40F2BB-49F2-425C-857D-976C19A2BC92} = {57D4810B-E372-489F-B24C-4FCB9DDE0683}
 	EndGlobalSection
 	GlobalSection(TestCaseManagementSettings) = postSolution
 		CategoryFile = SlowCheetah.vsmdi
