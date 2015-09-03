@@ -355,7 +355,6 @@ namespace SlowCheetah.VisualStudio
                 throw new COMException(string.Format(Resources.Error_SavingProjectFile, itemFullPath, GetErrorInfo()), hr);
             }
             ProjectItem selectedProjectItem = GetProjectItemFromHierarchy(hierarchy, itemid);
-            Project project = null;
             if (selectedProjectItem != null) {
                 // need to enure that this item has metadata TransformOnBuild set to true
                 if (buildPropertyStorage != null) {
@@ -409,7 +408,6 @@ namespace SlowCheetah.VisualStudio
                 IVsProjectSpecialFiles specialFiles = hierarchy as IVsProjectSpecialFiles;
                 if (specialFiles != null) {
                     uint itemid;
-                    string filePath;
                     specialFiles.GetFile((int)__PSFFILEID2.PSFFILEID_AppDesigner, (uint)__PSFFLAGS.PSFF_FullPath, out itemid, out propertiesFolder);
                 }
             }
@@ -815,19 +813,80 @@ namespace SlowCheetah.VisualStudio
                 this.LogMessageWriteLineFormat("SlowCheetah PreviewTransform");
                 FileInfo sourceFileInfo = new FileInfo(sourceFile);
                 // dest file
+
+
+                IVsProject vsProject = (IVsProject)hier;
+                string projectFullPath;
+                if (ErrorHandler.Failed(vsProject.GetMkDocument(VSConstants.VSITEMID_ROOT, out projectFullPath)))
+                {
+                    projectFullPath = null;
+                }
+
+                // Determine if the transformFile is a publish profile transform and if it is then see if a configuration transform exists
+                string configTransformFile = null;
+                if (!string.IsNullOrWhiteSpace(projectFullPath))
+                {
+                    List<string> publishProfiles = this.GetPublishProfileTransforms(hier, projectFullPath);
+                    FileInfo transformFileInfo = new FileInfo(transformFile);
+                    string transformName = transformFileInfo.Name;
+                    string transformExt = transformFileInfo.Extension;
+
+                    foreach (string publishProfile in publishProfiles)
+                    {
+                        int dotPos = publishProfile.IndexOf(".", StringComparison.Ordinal);
+                        string prefixedProfile = (dotPos < 0) ? "." + publishProfile : publishProfile.Substring(dotPos);
+
+                        int profilePos = transformName.IndexOf(prefixedProfile + transformExt, StringComparison.OrdinalIgnoreCase);
+                        if (profilePos >= 0)
+                        {
+                            string configTransformName = transformName.Remove(profilePos, prefixedProfile.Length);
+                            string configTransformPath = transformFileInfo.DirectoryName;
+
+                            int found;
+                            uint itemId;
+                            VSDOCUMENTPRIORITY[] priority = new VSDOCUMENTPRIORITY[1];
+                            int success = vsProject.IsDocumentInProject(configTransformName, out found, priority, out itemId);
+
+                            if ((success == VSConstants.S_OK) && (found != 0))
+                            {
+                                var configTransformTemp = !string.IsNullOrWhiteSpace(configTransformPath)
+                                    ? Path.Combine(configTransformPath, configTransformName)
+                                    : configTransformName;
+
+                                if (File.Exists(configTransformTemp))
+                                {
+                                    configTransformFile = configTransformTemp;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
                 string destFile = this.GetTempFilename(true, sourceFileInfo.Extension);
 
-                // perform the transform and then display the result into the diffmerge tool that comes with VS. If for 
-                // some reason we can't find it, we just open it in an editor window
-                ITransformer transformer = new Transformer();
-                transformer.Transform(sourceFile, transformFile, destFile);
+                // Perform the appropriate transforms
+                if (!string.IsNullOrWhiteSpace(configTransformFile))
+                {
+                    ITransformer transformer = new Transformer();
+                    transformer.Transform(sourceFile, configTransformFile, destFile);
+                    transformer.Transform(destFile, transformFile, destFile);
+                }
+                else
+                {
+                    ITransformer transformer = new Transformer();
+                    transformer.Transform(sourceFile, transformFile, destFile);
+                }
 
                 // Does the customer want a preview?
-                if (optionsPage.EnablePreview == false) {
+                if (optionsPage.EnablePreview == false)
+                {
                     GetDTE().ItemOperations.OpenFile(destFile);
                 }
                 else
                 {
+                    // Display the transform result into the diffmerge tool that comes with VS. If for 
+                    // some reason we can't find it, we just open it in an editor window
                     Guid SID_SVsDifferenceService = new Guid("{77115E75-EF9E-4F30-92F2-3FE78BCAF6CF}");
                     Guid IID_IVsDifferenceService = new Guid("{E20E53BE-8B7A-408F-AEA7-C0AAD6D1B946}");
                     uint VSDIFFOPT_RightFileIsTemporary = 0x00000020;   //The right file is a temporary file explicitly created for diff.
@@ -847,9 +906,13 @@ namespace SlowCheetah.VisualStudio
                             Debug.Assert(openComparisonWindow2 != null);
                             if(openComparisonWindow2 != null)
                             {
+                                var transformLabel = !string.IsNullOrWhiteSpace(configTransformFile)
+                                    ? string.Format("{0}, {1}", Path.GetFileName(configTransformFile), Path.GetFileName(transformFile))
+                                    : Path.GetFileName(transformFile);
+
                                 string sourceName = Path.GetFileName(sourceFile);
                                 string leftLabel = string.Format(CultureInfo.CurrentCulture,  Resources.TransformPreview_LeftLabel, sourceName);
-                                string rightLabel = string.Format(CultureInfo.CurrentCulture, Resources.TransformPreview_RightLabel, sourceName, Path.GetFileName(transformFile));
+                                string rightLabel = string.Format(CultureInfo.CurrentCulture, Resources.TransformPreview_RightLabel, sourceName, transformLabel);
                                 string caption = string.Format(CultureInfo.CurrentCulture, Resources.TransformPreview_Caption, sourceName);
                                 string tooltip = string.Format(CultureInfo.CurrentCulture, Resources.TransformPreview_ToolTip, sourceName);
                                 object[] paras = new object[] {sourceFile, destFile,  caption, tooltip, leftLabel, rightLabel, null, null, VSDIFFOPT_RightFileIsTemporary};
