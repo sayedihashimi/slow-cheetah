@@ -200,8 +200,12 @@ $propNuGetImportPath.Condition = ' ''$(SlowCheetah_NuGetImportPath)''=='''' ';
 $propImport = $propertyGroup.AddProperty('SlowCheetahTargets', '$(SlowCheetah_NuGetImportPath)');
 $propImport.Condition = ' ''$(SlowCheetah_EnableImportFromNuGet)''==''true'' and Exists(''$(SlowCheetah_NuGetImportPath)'') ';
 
-$item = $projectMSBuild.Items | ? Include -match "SlowCheetah.Transforms.targets"
-$item.ItemType = "None"
+$items = $projectMSBuild.Items
+$transformTarget = $items | ? Include -match "SlowCheetah.Transforms.targets"
+$transformTarget.ItemType = "None"
+
+$packagesConfig = $items | ? Include -match "packages.config"
+$packagesConfig.ItemType = "None"
 
 AddImportElementIfNotExists -projectRootElement $projectMSBuild
 
