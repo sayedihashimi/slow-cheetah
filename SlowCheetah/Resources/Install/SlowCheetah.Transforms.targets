@@ -10,6 +10,9 @@ WARNING:  DO NOT MODIFY this file, this file is added to your project automatica
 This file defines the steps in order to transform XML files.
 
 Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserved.
+
+Modifications:
+2016-08-03 Thomas Mühlgrabner: Added per-user transform capabilities
 ***********************************************************************************************
 -->
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
@@ -151,6 +154,8 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserve
       <_Sc_HasAppConfigPublishProfileTransform Condition=" '$(Configuration)'=='$(PublishProfile)' ">false</_Sc_HasAppConfigPublishProfileTransform>
       <_Sc_HasAppConfigTransform Condition=" '$(_Sc_HasAppConfigConfigurationTransform)'=='true' ">true</_Sc_HasAppConfigTransform>
       <_Sc_HasAppConfigTransform Condition=" '$(_Sc_HasAppConfigPublishProfileTransform)'=='true' ">true</_Sc_HasAppConfigTransform>
+      <_Sc_HasAppConfigUserTransform>false</_Sc_HasAppConfigUserTransform>
+      <_Sc_HasAppConfigUserTransform Condition=" Exists( '@(_AppConfigToTransform->'%(RelativeDir)%(Filename).$(Configuration).$(USERNAME)%(Extension)')' ) ">true</_Sc_HasAppConfigUserTransform>
     </PropertyGroup>
     <Message Text="Tasks path: $(SlowCheetahTaskPath)" Importance="low"/>
 
@@ -161,6 +166,13 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserve
                   Transform="@(_AppConfigToTransform->'%(RelativeDir)%(Filename).$(Configuration)%(Extension)')"
                   Destination="$(__SC_IntermediateAppConfig)"
                   Condition=" '$(_Sc_HasAppConfigConfigurationTransform)'=='true' " />
+
+    <!-- apply per-user transform on top of any per-configuration transform, if applicable -->
+    <!-- we don't do this for publishing -->
+    <SlowCheetah.Xdt.TransformXml Source="$(__SC_IntermediateAppConfig)"
+              Transform="@(_AppConfigToTransform->'%(RelativeDir)%(Filename).$(Configuration).$(USERNAME)%(Extension)')"
+              Destination="$(__SC_IntermediateAppConfig)"
+              Condition=" '$(_Sc_HasAppConfigUserTransform)'=='true' " />
 
     <SlowCheetah.Xdt.TransformXml Source="$(__SC_IntermediateAppConfig)"
                   Transform="@(_AppConfigToTransform->'%(RelativeDir)%(Filename).$(PublishProfile)%(Extension)')"
@@ -192,6 +204,19 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserve
                   Transform="%(RelativeDir)%(Filename).$(Configuration)%(Extension)"
                   Destination="@(_FilesToTransformNotAppConfig->'$(OutDir)%(Link)')"
                   Condition="Exists('%(RelativeDir)%(Filename).$(Configuration)%(Extension)')
+                              and '%(Link)'!='' " />
+
+    <!-- Also apply per-user transform (if applicable) -->
+    <SlowCheetah.Xdt.TransformXml Source="@(_FilesToTransformNotAppConfig->'%(FullPath)')"
+              Transform="%(RelativeDir)%(Filename).$(Configuration).$(USERNAME)%(Extension)"
+              Destination="@(_FilesToTransformNotAppConfig->'$(OutDir)%(RelativeDir)%(Filename)%(Extension)')"
+              Condition=" Exists('%(RelativeDir)%(Filename).$(Configuration).$(USERNAME)%(Extension)')
+                              and '%(Link)'=='' " />
+
+    <SlowCheetah.Xdt.TransformXml Source="@(_FilesToTransformNotAppConfig->'%(FullPath)')"
+                  Transform="%(RelativeDir)%(Filename).$(Configuration).$(USERNAME)%(Extension)"
+                  Destination="@(_FilesToTransformNotAppConfig->'$(OutDir)%(Link)')"
+                  Condition="Exists('%(RelativeDir)%(Filename).$(Configuration).$(USERNAME)%(Extension)')
                               and '%(Link)'!='' " />
   </Target>
 
