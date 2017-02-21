@@ -13,6 +13,25 @@ namespace SlowCheetah
     /// </summary>
     public class XmlTransformer : ITransformer
     {
+        private IXmlTransformationLogger logger;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="XmlTransformer"/> class.
+        /// </summary>
+        public XmlTransformer()
+            : this(null)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="XmlTransformer"/> class with an external logger.
+        /// </summary>
+        /// <param name="logger">External logger. Passed into the transformation</param>
+        public XmlTransformer(IXmlTransformationLogger logger)
+        {
+            this.logger = logger;
+        }
+
         /// <inheritdoc/>
         public void Transform(string source, string transform, string destination)
         {
@@ -21,7 +40,6 @@ namespace SlowCheetah
             Contract.Requires(!string.IsNullOrWhiteSpace(transform));
             Contract.Requires(!string.IsNullOrWhiteSpace(destination));
 
-            // TO DO: Logging
             // File validation
             if (!File.Exists(source))
             {
@@ -34,7 +52,7 @@ namespace SlowCheetah
             }
 
             using (XmlTransformableDocument document = new XmlTransformableDocument())
-            using (XmlTransformation transformation = new XmlTransformation(transform))
+            using (XmlTransformation transformation = new XmlTransformation(transform, this.logger))
             {
                 document.PreserveWhitespace = true;
                 document.Load(source);

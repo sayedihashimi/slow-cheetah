@@ -32,7 +32,9 @@ namespace SlowCheetah
         /// <inheritdoc/>
         public override bool Execute()
         {
-            ITransformer transformer = new XmlTransformer();
+            XmlTransformationTaskLogger logger = new XmlTransformationTaskLogger(this.Log);
+
+            ITransformer transformer = new XmlTransformer(logger);
 
             try
             {
@@ -50,8 +52,6 @@ namespace SlowCheetah
                     "Transformation succeeded");
             }
 
-            // TO DO: Transforms for different file types
-            // TO DO: Logging level: catch exceptions or log inside transformer?
             return !this.Log.HasLoggedErrors;
         }
     }
