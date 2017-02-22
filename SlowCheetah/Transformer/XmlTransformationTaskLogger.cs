@@ -20,26 +20,14 @@ namespace SlowCheetah
 
         private TaskLoggingHelper loggingHelper;
         private int indentLevel = 0;
-        private bool stackTrace;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="XmlTransformationTaskLogger"/> class.
         /// </summary>
         /// <param name="logger">The MSBuild logger</param>
         public XmlTransformationTaskLogger(TaskLoggingHelper logger)
-            : this(logger, false)
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="XmlTransformationTaskLogger"/> class.
-        /// </summary>
-        /// <param name="logger">The MSBuild logger</param>
-        /// <param name="stackTrace">True to show the stack trace in the log</param>
-        public XmlTransformationTaskLogger(TaskLoggingHelper logger, bool stackTrace)
         {
             this.loggingHelper = logger;
-            this.stackTrace = stackTrace;
         }
 
         private string IndentString
@@ -76,43 +64,19 @@ namespace SlowCheetah
         /// <inheritdoc/>
         public void LogErrorFromException(Exception ex)
         {
-            this.loggingHelper.LogErrorFromException(ex, this.stackTrace, this.stackTrace, null);
+            this.loggingHelper.LogErrorFromException(ex);
         }
 
         /// <inheritdoc/>
         public void LogErrorFromException(Exception ex, string file)
         {
-            this.loggingHelper.LogErrorFromException(ex, this.stackTrace, this.stackTrace, file);
+            this.loggingHelper.LogErrorFromException(ex, false, false, file);
         }
 
         /// <inheritdoc/>
         public void LogErrorFromException(Exception ex, string file, int lineNumber, int linePosition)
         {
-            string message = ex.Message;
-
-            if (this.stackTrace)
-            {
-                // loggingHelper.LogErrorFromException does not have an overload
-                // that accepts line numbers. So instead, we have to construct
-                // the error message from the exception and use LogError.
-                StringBuilder sb = new StringBuilder();
-                Exception exIterator = ex;
-                while (exIterator != null)
-                {
-                    sb.AppendFormat("{0} : {1}", exIterator.GetType().Name, exIterator.Message);
-                    sb.AppendLine();
-                    if (!string.IsNullOrEmpty(exIterator.StackTrace))
-                    {
-                        sb.Append(exIterator.StackTrace);
-                    }
-
-                    exIterator = exIterator.InnerException;
-                }
-
-                message = sb.ToString();
-            }
-
-            this.LogError(file, lineNumber, linePosition, message);
+            this.LogError(file, lineNumber, linePosition, ex.Message);
         }
 
         /// <inheritdoc/>
