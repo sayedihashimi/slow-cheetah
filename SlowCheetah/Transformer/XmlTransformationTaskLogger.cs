@@ -18,7 +18,8 @@ namespace SlowCheetah
     {
         private readonly string indentStringPiece = "  ";
 
-        private TaskLoggingHelper loggingHelper;
+        private readonly TaskLoggingHelper loggingHelper;
+
         private int indentLevel = 0;
 
         /// <summary>

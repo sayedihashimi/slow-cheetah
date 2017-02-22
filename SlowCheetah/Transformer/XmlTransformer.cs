@@ -3,6 +3,7 @@
 
 namespace SlowCheetah
 {
+    using System;
     using System.Diagnostics.Contracts;
     using System.IO;
     using Microsoft.Web.XmlTransform;
@@ -13,13 +14,12 @@ namespace SlowCheetah
     /// </summary>
     public class XmlTransformer : ITransformer
     {
-        private IXmlTransformationLogger logger;
+        private IXmlTransformationLogger logger = null;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="XmlTransformer"/> class.
         /// </summary>
         public XmlTransformer()
-            : this(null)
         {
         }
 
@@ -29,7 +29,7 @@ namespace SlowCheetah
         /// <param name="logger">External logger. Passed into the transformation</param>
         public XmlTransformer(IXmlTransformationLogger logger)
         {
-            this.logger = logger;
+            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         /// <inheritdoc/>
