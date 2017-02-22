@@ -1,0 +1,60 @@
+﻿// Copyright (c) Sayed Ibrahim Hashimi. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See  License.md file in the project root for full license information.
+
+namespace SlowCheetah
+{
+    using System;
+
+    /// <summary>
+    /// Interface for using an internal logger in <see cref="XmlTransformer"/>
+    /// </summary>
+    public interface ITransformationLogger
+    {
+        /// <summary>
+        /// Log a message
+        /// </summary>
+        /// <param name="message">The message.</param>
+        /// <param name="messageArgs">Optional message arguments</param>
+        void LogMessage(string message, params object[] messageArgs);
+
+        /// <summary>
+        /// Log a warning
+        /// </summary>
+        /// <param name="message">The warning message.</param>
+        /// <param name="messageArgs">Optional message arguments</param>
+        void LogWarning(string message, params object[] messageArgs);
+
+        /// <summary>
+        /// Log an warning specifying the file, line and position
+        /// </summary>
+        /// <param name="file">The file containing the warning</param>
+        /// <param name="lineNumber">Line of the warning</param>
+        /// <param name="linePosition">Position of the error</param>
+        /// <param name="message">The warning message</param>
+        /// <param name="messageArgs">Optional message arguments</param>
+        void LogWarning(string file, int lineNumber, int linePosition, string message, params object[] messageArgs);
+
+        /// <summary>
+        /// Log an error
+        /// </summary>
+        /// <param name="message">The error message.</param>
+        /// <param name="messageArgs">Optional message arguments</param>
+        void LogError(string message, params object[] messageArgs);
+
+        /// <summary>
+        /// Log an error specifying the file, line and position
+        /// </summary>
+        /// <param name="file">The file containing the error</param>
+        /// <param name="lineNumber">Line of the error</param>
+        /// <param name="linePosition">Position of the error</param>
+        /// <param name="message">The error message</param>
+        /// <param name="messageArgs">Optional message arguments</param>
+        void LogError(string file, int lineNumber, int linePosition, string message, params object[] messageArgs);
+
+        /// <summary>
+        /// Logs an error from an exception.
+        /// </summary>
+        /// <param name="ex">The exception</param>
+        void LogErrorFromException(Exception ex);
+    }
+}

@@ -50,10 +50,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Exceptions\TransformFailedException.cs" />
+    <Compile Include="Logging\ITransformationLogger.cs" />
+    <Compile Include="Logging\XmlTransformationPreviewLogger.cs" />
     <Compile Include="Transformer\ITransformer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Build\TransformXml.cs" />
-    <Compile Include="Transformer\XmlTransformationTaskLogger.cs" />
+    <Compile Include="Logging\XmlTransformationTaskLogger.cs" />
     <Compile Include="Transformer\XmlTransformer.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -28,7 +28,12 @@ namespace SlowCheetah
         /// <param name="logger">The MSBuild logger</param>
         public XmlTransformationTaskLogger(TaskLoggingHelper logger)
         {
-            this.loggingHelper = logger ?? throw new ArgumentNullException(nameof(logger));
+            if (logger == null)
+            {
+                throw new ArgumentNullException(nameof(logger));
+            }
+
+            this.loggingHelper = logger;
         }
 
         private string IndentString
