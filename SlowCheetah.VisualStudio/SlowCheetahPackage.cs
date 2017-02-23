@@ -299,6 +299,16 @@ namespace SlowCheetah.VisualStudio
             ProjectItem selectedProjectItem = PackageUtilities.GetAutomationFromHierarchy<ProjectItem>(hierarchy, itemid);
             if (selectedProjectItem != null)
             {
+                try
+                {
+                    selectedProjectItem.Save();
+                }
+                catch
+                {
+                    // If the item is not open, an exception is thrown,
+                    // but that is not a problem as it is not dirty
+                }
+
                 this.CheckSlowCheetahNugetInstallation(selectedProjectItem.ContainingProject);
 
                 // need to enure that this item has metadata TransformOnBuild set to true
@@ -390,10 +400,22 @@ namespace SlowCheetah.VisualStudio
             }
 
             string documentPath;
-            if (!this.TryGetFileToTransform(hierarchy, parentId, Path.GetFileName(transformPath), out documentPath))
+            uint docId;
+            if (!this.TryGetFileToTransform(hierarchy, parentId, Path.GetFileName(transformPath), out docId, out documentPath))
             {
                 // TO DO: Possibly tell the user that the transform file was not found.
                 return;
+            }
+
+            try
+            {
+                PackageUtilities.GetAutomationFromHierarchy<ProjectItem>(hierarchy, docId).Save();
+                PackageUtilities.GetAutomationFromHierarchy<ProjectItem>(hierarchy, itemId).Save();
+            }
+            catch
+            {
+                // If the item is not open, an exception is thrown,
+                // but that is not a problem as it is not dirty
             }
 
             this.PreviewTransform(hierarchy, documentPath, transformPath);
@@ -415,13 +437,16 @@ namespace SlowCheetah.VisualStudio
         /// <param name="hierarchy">Current project hierarchy</param>
         /// <param name="parentId">Parent ID of the file.</param>
         /// <param name="transformName">Name of the transformation file</param>
+        /// <param name="docId">ID of the file to transform</param>
         /// <param name="documentPath">Resulting path of the file to transform</param>
         /// <returns>True if the correct file was found</returns>
-        private bool TryGetFileToTransform(IVsHierarchy hierarchy, uint parentId, string transformName, out string documentPath)
+        private bool TryGetFileToTransform(IVsHierarchy hierarchy, uint parentId, string transformName, out uint docId, out string documentPath)
         {
             IVsProject project = (IVsProject)hierarchy;
 
             IEnumerable<string> configs = ProjectUtilities.GetProjectConfigurations(hierarchy);
+
+            docId = parentId;
 
             if (ErrorHandler.Failed(project.GetMkDocument(parentId, out documentPath)))
             {
@@ -430,14 +455,15 @@ namespace SlowCheetah.VisualStudio
 
             if (PackageUtilities.IsFileTransform(Path.GetFileName(documentPath), transformName, configs))
             {
+                // The parent is the file to transform
                 return true;
             }
             else
             {
                 object childIdObj;
                 hierarchy.GetProperty(parentId, (int)__VSHPROPID.VSHPROPID_FirstVisibleChild, out childIdObj);
-                uint childId = (uint)(int)childIdObj;
-                if (ErrorHandler.Failed(project.GetMkDocument(childId, out documentPath)))
+                docId = (uint)(int)childIdObj;
+                if (ErrorHandler.Failed(project.GetMkDocument(docId, out documentPath)))
                 {
                     return false;
                 }
@@ -448,11 +474,11 @@ namespace SlowCheetah.VisualStudio
                 }
                 else
                 {
-                    while (childId != VSConstants.VSITEMID_NIL)
+                    while (docId != VSConstants.VSITEMID_NIL)
                     {
-                        hierarchy.GetProperty(childId, (int)__VSHPROPID.VSHPROPID_NextVisibleSibling, out childIdObj);
-                        childId = (uint)(int)childIdObj;
-                        if (ErrorHandler.Succeeded(project.GetMkDocument(childId, out documentPath)))
+                        hierarchy.GetProperty(docId, (int)__VSHPROPID.VSHPROPID_NextVisibleSibling, out childIdObj);
+                        docId = (uint)(int)childIdObj;
+                        if (ErrorHandler.Succeeded(project.GetMkDocument(docId, out documentPath)))
                         {
                             if (PackageUtilities.IsFileTransform(Path.GetFileName(documentPath), transformName, configs))
                             {
