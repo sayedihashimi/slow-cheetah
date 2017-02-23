@@ -60,8 +60,9 @@ namespace SlowCheetah.VisualStudio
 
         private static readonly string PkgName = Settings.Default.SlowCheetahNugetPkgName;
 
-        private uint solutionUpdateCookie = 0;
         private ErrorListProvider errorListProvider;
+
+        private uint solutionUpdateCookie = 0;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SlowCheetahPackage"/> class.
@@ -110,13 +111,13 @@ namespace SlowCheetah.VisualStudio
         /// <inheritdoc/>
         public int UpdateSolution_Begin(ref int pfCancelUpdate)
         {
-            return VSConstants.E_NOTIMPL;
+            return VSConstants.S_OK;
         }
 
         /// <inheritdoc/>
         public int UpdateSolution_Done(int fSucceeded, int fModified, int fCancelCommand)
         {
-            return VSConstants.E_NOTIMPL;
+            return VSConstants.S_OK;
         }
 
         /// <inheritdoc/>
@@ -130,13 +131,13 @@ namespace SlowCheetah.VisualStudio
         /// <inheritdoc/>
         public int UpdateSolution_Cancel()
         {
-            return VSConstants.E_NOTIMPL;
+            return VSConstants.S_OK;
         }
 
         /// <inheritdoc/>
         public int OnActiveProjectCfgChange(IVsHierarchy pIVsHierarchy)
         {
-            return VSConstants.E_NOTIMPL;
+            return VSConstants.S_OK;
         }
 
         /// <summary>
@@ -782,7 +783,7 @@ namespace SlowCheetah.VisualStudio
                 // If for some reason we can't find it, we just open it in an editor window
                 this.errorListProvider.Tasks.Clear();
                 ITransformationLogger logger = new TransformationPreviewLogger(this.errorListProvider, hier);
-                ITransformer transformer = new XmlTransformer(logger);
+                ITransformer transformer = new XmlTransformer(logger, false);
                 if (!transformer.Transform(sourceFile, transformFile, destFile))
                 {
                     throw new TransformFailedException(Resources.Resources.TransformPreview_ErrorMessage);

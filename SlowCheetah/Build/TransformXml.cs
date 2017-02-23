@@ -34,7 +34,7 @@ namespace SlowCheetah
         {
             XmlTransformationTaskLogger logger = new XmlTransformationTaskLogger(this.Log);
 
-            ITransformer transformer = new XmlTransformer(logger);
+            ITransformer transformer = new XmlTransformer(logger, true);
 
             this.Log.LogMessage("Beginning transformation.");
 

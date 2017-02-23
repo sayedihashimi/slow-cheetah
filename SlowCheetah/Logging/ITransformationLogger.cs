@@ -6,7 +6,28 @@ namespace SlowCheetah
     using System;
 
     /// <summary>
-    /// Interface for using an internal logger in <see cref="XmlTransformer"/>
+    /// Importance of a message
+    /// </summary>
+    public enum LogMessageImportance
+    {
+        /// <summary>
+        /// High importace. Prioritize
+        /// </summary>
+        High,
+
+        /// <summary>
+        /// Normal importance.
+        /// </summary>
+        Normal,
+
+        /// <summary>
+        /// Low Importance. Do not show if unnecessary
+        /// </summary>
+        Low
+    }
+
+    /// <summary>
+    /// Interface for using an internal logger in an <see cref="ITransformer"/>
     /// </summary>
     public interface ITransformationLogger
     {
@@ -45,9 +66,10 @@ namespace SlowCheetah
         /// <summary>
         /// Log a message
         /// </summary>
+        /// <param name="importance">Importance of the message</param>
         /// <param name="message">The message.</param>
         /// <param name="messageArgs">Optional message arguments</param>
-        void LogMessage(string message, params object[] messageArgs);
+        void LogMessage(LogMessageImportance importance, string message, params object[] messageArgs);
 
         /// <summary>
         /// Log a warning
@@ -57,7 +79,7 @@ namespace SlowCheetah
         void LogWarning(string message, params object[] messageArgs);
 
         /// <summary>
-        /// Log an warning specifying the file, line and position
+        /// Log a warning specifying the file, line and position
         /// </summary>
         /// <param name="file">The file containing the warning</param>
         /// <param name="lineNumber">Line of the warning</param>

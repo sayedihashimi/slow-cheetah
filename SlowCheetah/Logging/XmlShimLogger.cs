@@ -4,27 +4,45 @@
 namespace SlowCheetah
 {
     using System;
+    using System.Diagnostics;
+    using System.Linq;
     using Microsoft.Web.XmlTransform;
 
     /// <summary>
-    /// Shim for using an inernal <see cref="ITransformationLogger"/> in <see cref="XmlTransformer"/>
+    /// Shim for using and <see cref="ITransformationLogger"/> as a <see cref="IXmlTransformationLogger"/>
     /// </summary>
-    public class XmlTransformationPreviewLogger : IXmlTransformationLogger
+    public class XmlShimLogger : IXmlTransformationLogger
     {
+        private static readonly string IndentStringPiece = "  ";
+
+        private readonly bool useSections;
+
         private readonly ITransformationLogger logger;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="XmlTransformationPreviewLogger"/> class.
-        /// </summary>
-        /// <param name="logger">The external logger</param>
-        public XmlTransformationPreviewLogger(ITransformationLogger logger)
-        {
-            if (logger == null)
-            {
-                throw new ArgumentNullException(nameof(logger));
-            }
+        private int indentLevel = 0;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="XmlShimLogger"/> class.
+        /// </summary>
+        /// <param name="logger">Our own logger</param>
+        /// <param name="useSections">Wheter or not to use sections</param>
+        public XmlShimLogger(ITransformationLogger logger, bool useSections)
+        {
             this.logger = logger;
+            this.useSections = useSections;
+        }
+
+        private string IndentString
+        {
+            get
+            {
+                if (this.indentLevel == 0)
+                {
+                    return string.Empty;
+                }
+
+                return string.Concat(Enumerable.Repeat(IndentStringPiece, this.indentLevel));
+            }
         }
 
         /// <inheritdoc/>
@@ -66,16 +84,38 @@ namespace SlowCheetah
         /// <inheritdoc/>
         public void LogMessage(string message, params object[] messageArgs)
         {
-            this.logger.LogMessage(message, messageArgs);
+            if (this.useSections)
+            {
+                message = string.Concat(this.IndentString, message);
+            }
+
+            this.logger.LogMessage(LogMessageImportance.Normal, message, messageArgs);
         }
 
         /// <inheritdoc/>
         public void LogMessage(MessageType type, string message, params object[] messageArgs)
         {
-            if (type != MessageType.Verbose)
+            LogMessageImportance importance;
+            switch (type)
             {
-                this.logger.LogMessage(message, messageArgs);
+                case MessageType.Normal:
+                    importance = LogMessageImportance.Normal;
+                    break;
+                case MessageType.Verbose:
+                    importance = LogMessageImportance.Low;
+                    break;
+                default:
+                    Debug.Fail("Unknown MessageType");
+                    importance = LogMessageImportance.Normal;
+                    break;
             }
+
+            if (this.useSections)
+            {
+                message = string.Concat(this.IndentString, message);
+            }
+
+            this.logger.LogMessage(importance, message, messageArgs);
         }
 
         /// <inheritdoc/>
@@ -99,25 +139,38 @@ namespace SlowCheetah
         /// <inheritdoc/>
         public void StartSection(string message, params object[] messageArgs)
         {
-            // Sections not used in error list
+            this.StartSection(MessageType.Normal, message, messageArgs);
         }
 
         /// <inheritdoc/>
         public void StartSection(MessageType type, string message, params object[] messageArgs)
         {
-            // Sections not used in error list
+            if (this.useSections)
+            {
+                this.LogMessage(message, messageArgs);
+                this.indentLevel++;
+            }
         }
 
         /// <inheritdoc/>
         public void EndSection(string message, params object[] messageArgs)
         {
-            // Sections not used in error list
+            this.EndSection(MessageType.Normal, message, messageArgs);
         }
 
         /// <inheritdoc/>
         public void EndSection(MessageType type, string message, params object[] messageArgs)
         {
-            // Sections not used in error list
+            if (this.useSections)
+            {
+                Debug.Assert(this.indentLevel > 0, "There must be at least one section started");
+                if (this.indentLevel > 0)
+                {
+                    this.indentLevel--;
+                }
+
+                this.LogMessage(type, message, messageArgs);
+            }
         }
     }
 }

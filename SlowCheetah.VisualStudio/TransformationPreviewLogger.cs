@@ -13,8 +13,8 @@ namespace SlowCheetah.VisualStudio
     /// </summary>
     public class TransformationPreviewLogger : ITransformationLogger
     {
-        private ErrorListProvider errorListProvider;
-        private IVsHierarchy hierachy;
+        private readonly ErrorListProvider errorListProvider;
+        private readonly IVsHierarchy hierachy;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TransformationPreviewLogger"/> class.
@@ -62,9 +62,12 @@ namespace SlowCheetah.VisualStudio
         }
 
         /// <inheritdoc/>
-        public void LogMessage(string message, params object[] messageArgs)
+        public void LogMessage(LogMessageImportance importance, string message, params object[] messageArgs)
         {
-            this.AddError(TaskErrorCategory.Message, string.Format(message, messageArgs), null, 0, 0);
+            if (importance != LogMessageImportance.Low)
+            {
+                this.AddError(TaskErrorCategory.Message, string.Format(message, messageArgs), null, 0, 0);
+            }
         }
 
         /// <inheritdoc/>
@@ -93,25 +96,10 @@ namespace SlowCheetah.VisualStudio
         {
             newError.Category = TaskCategory.Misc;
             newError.ErrorCategory = errorCategory;
-            if (file != null)
-            {
-                newError.Text = text;
-            }
-
-            if (file != null)
-            {
-                newError.Document = file;
-            }
-
-            if (lineNumber > 0)
-            {
-                newError.Line = lineNumber;
-            }
-
-            if (linePosition > 0)
-            {
-                newError.Column = linePosition;
-            }
+            newError.Text = text;
+            newError.Document = file;
+            newError.Line = lineNumber;
+            newError.Column = linePosition;
 
             newError.Navigate += (sender, e) =>
             {

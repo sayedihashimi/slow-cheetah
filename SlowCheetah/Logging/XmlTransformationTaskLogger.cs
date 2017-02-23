@@ -14,13 +14,9 @@ namespace SlowCheetah
     /// <summary>
     /// Shim for using MSBuild logger in <see cref="XmlTransformation"/>
     /// </summary>
-    public class XmlTransformationTaskLogger : IXmlTransformationLogger
+    public class XmlTransformationTaskLogger : ITransformationLogger
     {
-        private readonly string indentStringPiece = "  ";
-
         private readonly TaskLoggingHelper loggingHelper;
-
-        private int indentLevel = 0;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="XmlTransformationTaskLogger"/> class.
@@ -36,29 +32,10 @@ namespace SlowCheetah
             this.loggingHelper = logger;
         }
 
-        private string IndentString
-        {
-            get
-            {
-                if (this.indentLevel == 0)
-                {
-                    return string.Empty;
-                }
-
-                return string.Concat(Enumerable.Repeat(this.indentStringPiece, this.indentLevel));
-            }
-        }
-
         /// <inheritdoc/>
         public void LogError(string message, params object[] messageArgs)
         {
             this.loggingHelper.LogError(message, messageArgs);
-        }
-
-        /// <inheritdoc/>
-        public void LogError(string file, string message, params object[] messageArgs)
-        {
-            this.LogError(file, 0, 0, message, messageArgs);
         }
 
         /// <inheritdoc/>
@@ -74,37 +51,28 @@ namespace SlowCheetah
         }
 
         /// <inheritdoc/>
-        public void LogErrorFromException(Exception ex, string file)
-        {
-            this.loggingHelper.LogErrorFromException(ex, false, false, file);
-        }
-
-        /// <inheritdoc/>
         public void LogErrorFromException(Exception ex, string file, int lineNumber, int linePosition)
         {
             this.LogError(file, lineNumber, linePosition, ex.Message);
         }
 
         /// <inheritdoc/>
-        public void LogMessage(string message, params object[] messageArgs)
-        {
-            this.LogMessage(MessageType.Normal, message, messageArgs);
-        }
-
-        /// <inheritdoc/>
-        public void LogMessage(MessageType type, string message, params object[] messageArgs)
+        public void LogMessage(LogMessageImportance type, string message, params object[] messageArgs)
         {
             MessageImportance importance;
             switch (type)
             {
-                case MessageType.Normal:
+                case LogMessageImportance.High:
+                    importance = MessageImportance.High;
+                    break;
+                case LogMessageImportance.Normal:
                     importance = MessageImportance.Normal;
                     break;
-                case MessageType.Verbose:
+                case LogMessageImportance.Low:
                     importance = MessageImportance.Low;
                     break;
                 default:
-                    Debug.Fail("Unknown MessageType");
+                    Debug.Fail("Unknown LogMessageImportance");
                     importance = MessageImportance.Normal;
                     break;
             }
@@ -119,46 +87,9 @@ namespace SlowCheetah
         }
 
         /// <inheritdoc/>
-        public void LogWarning(string file, string message, params object[] messageArgs)
-        {
-            this.LogWarning(file, 0, 0, message, messageArgs);
-        }
-
-        /// <inheritdoc/>
         public void LogWarning(string file, int lineNumber, int linePosition, string message, params object[] messageArgs)
         {
             this.loggingHelper.LogWarning(null, null, null, file, lineNumber, linePosition, 0, 0, message, messageArgs);
-        }
-
-        /// <inheritdoc/>
-        public void StartSection(string message, params object[] messageArgs)
-        {
-            this.StartSection(MessageType.Normal, message, messageArgs);
-        }
-
-        /// <inheritdoc/>
-        public void StartSection(MessageType type, string message, params object[] messageArgs)
-        {
-            this.LogMessage(type, message, messageArgs);
-            this.indentLevel++;
-        }
-
-        /// <inheritdoc/>
-        public void EndSection(string message, params object[] messageArgs)
-        {
-            this.EndSection(MessageType.Normal, message, messageArgs);
-        }
-
-        /// <inheritdoc/>
-        public void EndSection(MessageType type, string message, params object[] messageArgs)
-        {
-            Debug.Assert(this.indentLevel > 0, "There must be at least one section started");
-            if (this.indentLevel > 0)
-            {
-                this.indentLevel--;
-            }
-
-            this.LogMessage(type, message, messageArgs);
         }
     }
 }

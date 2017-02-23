@@ -27,28 +27,15 @@ namespace SlowCheetah
         /// Initializes a new instance of the <see cref="XmlTransformer"/> class with an external logger.
         /// </summary>
         /// <param name="logger">External logger. Passed into the transformation</param>
-        public XmlTransformer(IXmlTransformationLogger logger)
+        /// <param name="useSections">Wheter or not to use sections while logging</param>
+        public XmlTransformer(ITransformationLogger logger, bool useSections)
         {
             if (logger == null)
             {
                 throw new ArgumentNullException(nameof(logger));
             }
 
-            this.logger = logger;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="XmlTransformer"/> class with an external logger.
-        /// </summary>
-        /// <param name="logger">External logger. Passed into the transformation</param>
-        public XmlTransformer(ITransformationLogger logger)
-        {
-            if (logger == null)
-            {
-                throw new ArgumentNullException(nameof(logger));
-            }
-
-            this.logger = new XmlTransformationPreviewLogger(logger);
+            this.logger = new XmlShimLogger(logger, useSections);
         }
 
         /// <inheritdoc/>
