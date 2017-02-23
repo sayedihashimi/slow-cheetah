@@ -13,17 +13,17 @@ namespace SlowCheetah
         /// <summary>
         /// High importace. Prioritize
         /// </summary>
-        High,
+        High = 2,
 
         /// <summary>
         /// Normal importance.
         /// </summary>
-        Normal,
+        Normal = 1,
 
         /// <summary>
         /// Low Importance. Do not show if unnecessary
         /// </summary>
-        Low
+        Low = 0
     }
 
     /// <summary>
