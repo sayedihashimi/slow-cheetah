@@ -77,7 +77,7 @@ namespace SlowCheetah
                 document.Load(source);
 
                 var success = transformation.Apply(document);
-                if (!success)
+                if (success)
                 {
                     document.Save(destination);
                 }
