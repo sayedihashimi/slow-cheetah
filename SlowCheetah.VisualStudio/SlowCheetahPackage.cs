@@ -15,7 +15,6 @@ namespace SlowCheetah.VisualStudio
     using System.Xml;
     using EnvDTE;
     using Microsoft.VisualStudio;
-    using Microsoft.VisualStudio.ComponentModelHost;
     using Microsoft.VisualStudio.Shell;
     using Microsoft.VisualStudio.Shell.Interop;
     using NuGet.VisualStudio;
@@ -55,11 +54,6 @@ namespace SlowCheetah.VisualStudio
     [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
     public sealed class SlowCheetahPackage : Package, IVsUpdateSolutionEvents
     {
-        /// <summary>
-        /// SlowCheetahPackage GUID string.
-        /// </summary>
-        public const string PackageGuidString = "9f2f5f20-3e0c-4c4d-9064-0351c3adec59";
-
         private static readonly string TransformOnBuild = "TransformOnBuild";
         private static readonly string IsTransformFile = "IsTransformFile";
         private static readonly string DependentUpon = "DependentUpon";
@@ -80,6 +74,7 @@ namespace SlowCheetah.VisualStudio
             // initialization is the Initialize method.
             this.LogMessageWriteLineFormat("Entering constructor for: {0}", this.ToString());
             OurPackage = this;
+            this.NuGetManager = new SlowCheetahNuGetManager(this);
         }
 
         /// <summary>
@@ -88,6 +83,8 @@ namespace SlowCheetah.VisualStudio
         public static SlowCheetahPackage OurPackage { get; private set; }
 
         private IList<string> TempFilesCreated { get; } = new List<string>();
+
+        private SlowCheetahNuGetManager NuGetManager { get; }
 
         /// <summary>
         /// Gets the installation directory for the current instance of Visual Studio.
@@ -343,7 +340,8 @@ namespace SlowCheetah.VisualStudio
             ProjectItem selectedProjectItem = PackageUtilities.GetAutomationFromHierarchy<ProjectItem>(hierarchy, itemid);
             if (selectedProjectItem != null)
             {
-                this.CheckSlowCheetahNugetInstallation(selectedProjectItem.ContainingProject);
+                // Checks the SlowCheetah NuGet package installation
+                this.NuGetManager.CheckSlowCheetahInstallation(hierarchy);
 
                 // need to enure that this item has metadata TransformOnBuild set to true
                 if (buildPropertyStorage != null)
@@ -422,8 +420,8 @@ namespace SlowCheetah.VisualStudio
                 return;
             }
 
-            Project currentProject = PackageUtilities.GetAutomationFromHierarchy<Project>(hierarchy, (uint)VSConstants.VSITEMID.Root);
-            this.CheckSlowCheetahNugetInstallation(currentProject);
+            // Checks the SlowCheetah NuGet package installation
+            this.NuGetManager.CheckSlowCheetahInstallation(hierarchy);
 
             object parentIdObj;
             ErrorHandler.ThrowOnFailure(hierarchy.GetProperty(itemId, (int)__VSHPROPID.VSHPROPID_Parent, out parentIdObj));
@@ -441,15 +439,6 @@ namespace SlowCheetah.VisualStudio
             }
 
             this.PreviewTransform(hierarchy, documentPath, transformPath);
-        }
-
-        private void CheckSlowCheetahNugetInstallation(Project project)
-        {
-            if (!this.IsSlowCheetahPackageInstalled(project))
-            {
-                INugetPackageHandler nugetHandler = NugetHandlerFactory.GetHandler(this);
-                nugetHandler.ShowUpdateInfo();
-            }
         }
 
         /// <summary>
@@ -841,29 +830,6 @@ namespace SlowCheetah.VisualStudio
             // TODO: Instead of creating a file and then deleting it later we could instead do this
             //          http://matthewmanela.com/blog/the-problem-with-the-envdte-itemoperations-newfile-method/
             //          http://social.msdn.microsoft.com/Forums/en/vsx/thread/eb032063-eb4d-42e0-84e8-dec64bf42abf
-        }
-
-        /// <summary>
-        /// Verifies if the correct (updated) SlowCheetah Nuget package is installed.
-        /// </summary>
-        /// <param name="project">Current project</param>
-        /// <returns>True if the package is installed</returns>
-        private bool IsSlowCheetahPackageInstalled(Project project)
-        {
-            var componentModel = (IComponentModel)this.GetService(typeof(SComponentModel));
-            IVsPackageInstallerServices installerServices = componentModel.GetService<IVsPackageInstallerServices>();
-            if (installerServices.IsPackageInstalled(project, PkgName))
-            {
-                IVsPackageMetadata scPackage =
-                    installerServices.GetInstalledPackages().First(pkg => string.Equals(pkg.Id, PkgName, StringComparison.OrdinalIgnoreCase));
-                Version ver;
-                if (Version.TryParse(scPackage.VersionString, out ver))
-                {
-                    return ver > new Version(2, 5, 15);
-                }
-            }
-
-            return false;
         }
 
         /// <summary>
