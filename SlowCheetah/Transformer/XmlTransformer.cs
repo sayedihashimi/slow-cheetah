@@ -29,11 +29,30 @@ namespace SlowCheetah
         /// <param name="logger">External logger. Passed into the transformation</param>
         public XmlTransformer(IXmlTransformationLogger logger)
         {
-            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            if (logger == null)
+            {
+                throw new ArgumentNullException(nameof(logger));
+            }
+
+            this.logger = logger;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="XmlTransformer"/> class with an external logger.
+        /// </summary>
+        /// <param name="logger">External logger. Passed into the transformation</param>
+        public XmlTransformer(ITransformationLogger logger)
+        {
+            if (logger == null)
+            {
+                throw new ArgumentNullException(nameof(logger));
+            }
+
+            this.logger = new XmlTransformationPreviewLogger(logger);
         }
 
         /// <inheritdoc/>
-        public void Transform(string source, string transform, string destination)
+        public bool Transform(string source, string transform, string destination)
         {
             // Parameter validation
             Contract.Requires(!string.IsNullOrWhiteSpace(source));
@@ -60,11 +79,10 @@ namespace SlowCheetah
                 var success = transformation.Apply(document);
                 if (!success)
                 {
-                    string message = $"There was an unknown error trying while trying to apply the transform. Source file='{source}',Transform='{transform}', Destination='{destination}'";
-                    throw new TransformFailedException(message);
+                    document.Save(destination);
                 }
 
-                document.Save(destination);
+                return success;
             }
         }
     }

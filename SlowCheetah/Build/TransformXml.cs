@@ -36,23 +36,16 @@ namespace SlowCheetah
 
             ITransformer transformer = new XmlTransformer(logger);
 
-            try
-            {
-                this.Log.LogMessage("Beginning transformation.");
-                transformer.Transform(this.Source, this.Transform, this.Destination);
-            }
-            catch (Exception e)
-            {
-                this.Log.LogErrorFromException(e);
-            }
-            finally
-            {
-                this.Log.LogMessage(this.Log.HasLoggedErrors ?
-                    "Transformation failed." :
-                    "Transformation succeeded");
-            }
+            this.Log.LogMessage("Beginning transformation.");
 
-            return !this.Log.HasLoggedErrors;
+            bool success = transformer.Transform(this.Source, this.Transform, this.Destination);
+            success = success && !this.Log.HasLoggedErrors;
+
+            this.Log.LogMessage(success ?
+                    "Transformation succeeded." :
+                    "Transformation failed.");
+
+            return success;
         }
     }
 }

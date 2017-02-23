@@ -11,6 +11,38 @@ namespace SlowCheetah
     public interface ITransformationLogger
     {
         /// <summary>
+        /// Log an error
+        /// </summary>
+        /// <param name="message">The error message.</param>
+        /// <param name="messageArgs">Optional message arguments</param>
+        void LogError(string message, params object[] messageArgs);
+
+        /// <summary>
+        /// Log an error specifying the file, line and position
+        /// </summary>
+        /// <param name="file">The file containing the error</param>
+        /// <param name="lineNumber">Line of the error</param>
+        /// <param name="linePosition">Position of the error</param>
+        /// <param name="message">The error message</param>
+        /// <param name="messageArgs">Optional message arguments</param>
+        void LogError(string file, int lineNumber, int linePosition, string message, params object[] messageArgs);
+
+        /// <summary>
+        /// Logs an error from an exception.
+        /// </summary>
+        /// <param name="ex">The exception</param>
+        void LogErrorFromException(Exception ex);
+
+        /// <summary>
+        /// Logs an error from an exception specifying the file, line number and position
+        /// </summary>
+        /// <param name="ex">The exception</param>
+        /// <param name="file">The file containing the error</param>
+        /// <param name="lineNumber">Line of the error</param>
+        /// <param name="linePosition">Position of the error</param>
+        void LogErrorFromException(Exception ex, string file, int lineNumber, int linePosition);
+
+        /// <summary>
         /// Log a message
         /// </summary>
         /// <param name="message">The message.</param>
@@ -33,28 +65,5 @@ namespace SlowCheetah
         /// <param name="message">The warning message</param>
         /// <param name="messageArgs">Optional message arguments</param>
         void LogWarning(string file, int lineNumber, int linePosition, string message, params object[] messageArgs);
-
-        /// <summary>
-        /// Log an error
-        /// </summary>
-        /// <param name="message">The error message.</param>
-        /// <param name="messageArgs">Optional message arguments</param>
-        void LogError(string message, params object[] messageArgs);
-
-        /// <summary>
-        /// Log an error specifying the file, line and position
-        /// </summary>
-        /// <param name="file">The file containing the error</param>
-        /// <param name="lineNumber">Line of the error</param>
-        /// <param name="linePosition">Position of the error</param>
-        /// <param name="message">The error message</param>
-        /// <param name="messageArgs">Optional message arguments</param>
-        void LogError(string file, int lineNumber, int linePosition, string message, params object[] messageArgs);
-
-        /// <summary>
-        /// Logs an error from an exception.
-        /// </summary>
-        /// <param name="ex">The exception</param>
-        void LogErrorFromException(Exception ex);
     }
 }

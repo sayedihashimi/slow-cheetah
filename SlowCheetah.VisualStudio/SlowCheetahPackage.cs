@@ -11,9 +11,7 @@ namespace SlowCheetah.VisualStudio
     using System.Globalization;
     using System.IO;
     using System.Linq;
-    using System.Reflection;
     using System.Runtime.InteropServices;
-    using System.Text.RegularExpressions;
     using System.Xml;
     using EnvDTE;
     using Microsoft.VisualStudio;
@@ -21,6 +19,7 @@ namespace SlowCheetah.VisualStudio
     using Microsoft.VisualStudio.Shell;
     using Microsoft.VisualStudio.Shell.Interop;
     using NuGet.VisualStudio;
+    using SlowCheetah.Exceptions;
     using SlowCheetah.VisualStudio.Properties;
 
     /// <summary>
@@ -54,7 +53,7 @@ namespace SlowCheetah.VisualStudio
     [ProvideOptionPageAttribute(typeof(OptionsDialogPage), "Slow Cheetah", "General", 100, 101, true)]
     [ProvideProfileAttribute(typeof(OptionsDialogPage), "Slow Cheetah", "General", 100, 101, true)]
     [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
-    public sealed class SlowCheetahPackage : Package
+    public sealed class SlowCheetahPackage : Package, IVsUpdateSolutionEvents
     {
         /// <summary>
         /// SlowCheetahPackage GUID string.
@@ -66,6 +65,9 @@ namespace SlowCheetah.VisualStudio
         private static readonly string DependentUpon = "DependentUpon";
 
         private static readonly string PkgName = Settings.Default.SlowCheetahNugetPkgName;
+
+        private uint solutionUpdateCookie = 0;
+        private ErrorListProvider errorListProvider;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SlowCheetahPackage"/> class.
@@ -108,6 +110,38 @@ namespace SlowCheetah.VisualStudio
             return installDirectory;
         }
 
+        /// <inheritdoc/>
+        public int UpdateSolution_Begin(ref int pfCancelUpdate)
+        {
+            return VSConstants.E_NOTIMPL;
+        }
+
+        /// <inheritdoc/>
+        public int UpdateSolution_Done(int fSucceeded, int fModified, int fCancelCommand)
+        {
+            return VSConstants.E_NOTIMPL;
+        }
+
+        /// <inheritdoc/>
+        public int UpdateSolution_StartUpdate(ref int pfCancelUpdate)
+        {
+            // On solution update, clear all errors generated
+            this.errorListProvider.Tasks.Clear();
+            return VSConstants.S_OK;
+        }
+
+        /// <inheritdoc/>
+        public int UpdateSolution_Cancel()
+        {
+            return VSConstants.E_NOTIMPL;
+        }
+
+        /// <inheritdoc/>
+        public int OnActiveProjectCfgChange(IVsHierarchy pIVsHierarchy)
+        {
+            return VSConstants.E_NOTIMPL;
+        }
+
         /// <summary>
         /// Initialization of the package; this method is called right after the package is sited, so this is the place
         /// where you can put all the initialization code that rely on services provided by VisualStudio.
@@ -119,6 +153,10 @@ namespace SlowCheetah.VisualStudio
 
             // Initialization logic
             this.LogMessageWriteLineFormat(string.Format(CultureInfo.CurrentCulture, "Entering Initialize() of: {0}", this.ToString()));
+
+            this.errorListProvider = new ErrorListProvider(this);
+            IVsSolutionBuildManager solutionBuildManager = this.GetService(typeof(SVsSolutionBuildManager)) as IVsSolutionBuildManager;
+            solutionBuildManager.AdviseUpdateSolutionEvents(this, out this.solutionUpdateCookie);
 
             // Add our command handlers for menu (commands must exist in the .vsct file)
             OleMenuCommandService mcs = this.GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
@@ -152,6 +190,12 @@ namespace SlowCheetah.VisualStudio
                         file,
                         ex.Message);
                 }
+            }
+
+            if (this.solutionUpdateCookie > 0)
+            {
+                IVsSolutionBuildManager solutionBuildManager = this.GetService(typeof(SVsSolutionBuildManager)) as IVsSolutionBuildManager;
+                solutionBuildManager.UnadviseUpdateSolutionEvents(this.solutionUpdateCookie);
             }
 
             base.Dispose(disposing);
@@ -747,8 +791,13 @@ namespace SlowCheetah.VisualStudio
 
                 // perform the transform and then display the result into the diffmerge tool that comes with VS.
                 // If for some reason we can't find it, we just open it in an editor window
-                ITransformer transformer = new XmlTransformer();
-                transformer.Transform(sourceFile, transformFile, destFile);
+                this.errorListProvider.Tasks.Clear();
+                ITransformationLogger logger = new TransformationPreviewLogger(this.errorListProvider, hier);
+                ITransformer transformer = new XmlTransformer(logger);
+                if (!transformer.Transform(sourceFile, transformFile, destFile))
+                {
+                    throw new TransformFailedException(Resources.Resources.TransformPreview_ErrorMessage);
+                }
 
                 // Does the customer want a preview?
                 if (optionsPage.EnablePreview == false)

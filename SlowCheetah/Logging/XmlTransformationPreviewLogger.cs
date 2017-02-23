@@ -54,13 +54,13 @@ namespace SlowCheetah
         /// <inheritdoc/>
         public void LogErrorFromException(Exception ex, string file)
         {
-            this.logger.LogErrorFromException(ex);
+            this.logger.LogErrorFromException(ex, file, 0, 0);
         }
 
         /// <inheritdoc/>
         public void LogErrorFromException(Exception ex, string file, int lineNumber, int linePosition)
         {
-            this.logger.LogErrorFromException(ex);
+            this.logger.LogErrorFromException(ex, file, lineNumber, linePosition);
         }
 
         /// <inheritdoc/>
@@ -72,7 +72,10 @@ namespace SlowCheetah
         /// <inheritdoc/>
         public void LogMessage(MessageType type, string message, params object[] messageArgs)
         {
-            this.logger.LogMessage(message, messageArgs);
+            if (type != MessageType.Verbose)
+            {
+                this.logger.LogMessage(message, messageArgs);
+            }
         }
 
         /// <inheritdoc/>
@@ -96,25 +99,25 @@ namespace SlowCheetah
         /// <inheritdoc/>
         public void StartSection(string message, params object[] messageArgs)
         {
-            // this.LogMessage(message, messageArgs);
+            // Sections not used in error list
         }
 
         /// <inheritdoc/>
         public void StartSection(MessageType type, string message, params object[] messageArgs)
         {
-            // this.LogMessage(message, messageArgs);
+            // Sections not used in error list
         }
 
         /// <inheritdoc/>
         public void EndSection(string message, params object[] messageArgs)
         {
-            // this.LogMessage(message, messageArgs);
+            // Sections not used in error list
         }
 
         /// <inheritdoc/>
         public void EndSection(MessageType type, string message, params object[] messageArgs)
         {
-            // this.LogMessage(message, messageArgs);
+            // Sections not used in error list
         }
     }
 }

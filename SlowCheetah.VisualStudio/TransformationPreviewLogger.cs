@@ -13,101 +13,109 @@ namespace SlowCheetah.VisualStudio
     /// </summary>
     public class TransformationPreviewLogger : ITransformationLogger
     {
-        private IVsOutputWindowPane outputWindow;
         private ErrorListProvider errorListProvider;
+        private IVsHierarchy hierachy;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TransformationPreviewLogger"/> class.
         /// </summary>
-        /// <param name="package">The VS Package</param>
-        public TransformationPreviewLogger(IServiceProvider package)
+        /// <param name="errorListProvider">The VS Package</param>
+        /// <param name="hierachy">The current project hierarchy</param>
+        public TransformationPreviewLogger(ErrorListProvider errorListProvider, IVsHierarchy hierachy)
         {
-            if (package == null)
+            if (errorListProvider == null)
             {
-                throw new ArgumentNullException(nameof(package));
+                throw new ArgumentNullException(nameof(errorListProvider));
             }
 
-            this.outputWindow = (IVsOutputWindowPane)package.GetService(typeof(SVsGeneralOutputWindowPane));
-            this.errorListProvider = new ErrorListProvider(package);
+            if (hierachy == null)
+            {
+                throw new ArgumentNullException(nameof(hierachy));
+            }
+
+            this.errorListProvider = errorListProvider;
+            this.hierachy = hierachy;
         }
 
         /// <inheritdoc/>
         public void LogError(string message, params object[] messageArgs)
         {
-            var newError = new ErrorTask()
-            {
-                ErrorCategory = TaskErrorCategory.Error,
-                Category = TaskCategory.Misc,
-                Text = string.Format(message, messageArgs)
-            };
-
-            this.errorListProvider.Tasks.Add(newError);
-            this.errorListProvider.Show();
+            this.AddError(TaskErrorCategory.Error, string.Format(message, messageArgs), null, 0, 0);
         }
 
         /// <inheritdoc/>
         public void LogError(string file, int lineNumber, int linePosition, string message, params object[] messageArgs)
         {
-            var newError = new ErrorTask()
-            {
-                ErrorCategory = TaskErrorCategory.Error,
-                Category = TaskCategory.Misc,
-                Text = string.Format(message, messageArgs),
-                Document = file,
-                Line = lineNumber,
-                Column = linePosition
-            };
-
-            this.errorListProvider.Tasks.Add(newError);
-            this.errorListProvider.Show();
+            this.AddError(TaskErrorCategory.Error, string.Format(message, messageArgs), file, lineNumber, linePosition);
         }
 
         /// <inheritdoc/>
         public void LogErrorFromException(Exception ex)
         {
-            this.errorListProvider.Tasks.Add(new ErrorTask(ex));
-            this.errorListProvider.Show();
+            this.AddError(ex, TaskErrorCategory.Error, null, 0, 0);
+        }
+
+        /// <inheritdoc/>
+        public void LogErrorFromException(Exception ex, string file, int lineNumber, int linePosition)
+        {
+            this.AddError(ex, TaskErrorCategory.Error, file, lineNumber, linePosition);
         }
 
         /// <inheritdoc/>
         public void LogMessage(string message, params object[] messageArgs)
         {
-            var newError = new ErrorTask()
-            {
-                ErrorCategory = TaskErrorCategory.Message,
-                Category = TaskCategory.Misc,
-                Text = string.Format(message, messageArgs)
-            };
-
-            this.errorListProvider.Tasks.Add(newError);
-            this.errorListProvider.Show();
+            this.AddError(TaskErrorCategory.Message, string.Format(message, messageArgs), null, 0, 0);
         }
 
         /// <inheritdoc/>
         public void LogWarning(string message, params object[] messageArgs)
         {
-            var newError = new ErrorTask()
-            {
-                ErrorCategory = TaskErrorCategory.Warning,
-                Category = TaskCategory.Misc,
-                Text = string.Format(message, messageArgs)
-            };
-
-            this.errorListProvider.Tasks.Add(newError);
-            this.errorListProvider.Show();
+            this.AddError(TaskErrorCategory.Warning, string.Format(message, messageArgs), null, 0, 0);
         }
 
         /// <inheritdoc/>
         public void LogWarning(string file, int lineNumber, int linePosition, string message, params object[] messageArgs)
         {
-            var newError = new ErrorTask()
+            this.AddError(TaskErrorCategory.Warning, string.Format(message, messageArgs), file, lineNumber, linePosition);
+        }
+
+        private void AddError(TaskErrorCategory errorCategory, string text, string file, int lineNumber, int linePosition)
+        {
+            this.ShowError(new ErrorTask(), errorCategory, text, file, lineNumber, linePosition);
+        }
+
+        private void AddError(Exception ex, TaskErrorCategory errorCategory, string file, int lineNumber, int linePosition)
+        {
+            this.ShowError(new ErrorTask(ex), errorCategory, null, file, lineNumber, linePosition);
+        }
+
+        private void ShowError(ErrorTask newError, TaskErrorCategory errorCategory, string text, string file, int lineNumber, int linePosition)
+        {
+            newError.Category = TaskCategory.Misc;
+            newError.ErrorCategory = errorCategory;
+            if (file != null)
             {
-                ErrorCategory = TaskErrorCategory.Warning,
-                Category = TaskCategory.Misc,
-                Text = string.Format(message, messageArgs),
-                Document = file,
-                Line = lineNumber,
-                Column = linePosition
+                newError.Text = text;
+            }
+
+            if (file != null)
+            {
+                newError.Document = file;
+            }
+
+            if (lineNumber > 0)
+            {
+                newError.Line = lineNumber;
+            }
+
+            if (linePosition > 0)
+            {
+                newError.Column = linePosition;
+            }
+
+            newError.Navigate += (sender, e) =>
+            {
+                this.errorListProvider.Navigate(newError, new Guid(EnvDTE.Constants.vsViewKindCode));
             };
 
             this.errorListProvider.Tasks.Add(newError);

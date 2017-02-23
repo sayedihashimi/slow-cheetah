@@ -14,6 +14,6 @@ namespace SlowCheetah
         /// <param name="source">Path to source file</param>
         /// <param name="transform">Path to tranformation file</param>
         /// <param name="destination">Path to destination of transformed file</param>
-        void Transform(string source, string transform, string destination);
+        bool Transform(string source, string transform, string destination);
     }
 }
