@@ -32,6 +32,7 @@ namespace SlowCheetah
             {
                 throw new ArgumentNullException(nameof(logger));
             }
+
             this.logger = logger;
 
             this.useSections = useSections;
