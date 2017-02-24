@@ -430,7 +430,7 @@ namespace SlowCheetah.VisualStudio
 
             IEnumerable<string> configs = ProjectUtilities.GetProjectConfigurations(hierarchy);
 
-            docId = parentId;
+            docId = 0;
 
             if (ErrorHandler.Failed(project.GetMkDocument(parentId, out documentPath)))
             {
@@ -439,7 +439,7 @@ namespace SlowCheetah.VisualStudio
 
             if (PackageUtilities.IsFileTransform(Path.GetFileName(documentPath), transformName, configs))
             {
-                // The parent is the file to transform
+                docId = parentId;
                 return true;
             }
             else
