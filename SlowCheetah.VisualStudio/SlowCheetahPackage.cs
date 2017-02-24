@@ -430,10 +430,9 @@ namespace SlowCheetah.VisualStudio
 
             IEnumerable<string> configs = ProjectUtilities.GetProjectConfigurations(hierarchy);
 
-            docId = 0;
-
             if (ErrorHandler.Failed(project.GetMkDocument(parentId, out documentPath)))
             {
+                docId = 0;
                 return false;
             }
 
@@ -449,6 +448,8 @@ namespace SlowCheetah.VisualStudio
                 docId = (uint)(int)childIdObj;
                 if (ErrorHandler.Failed(project.GetMkDocument(docId, out documentPath)))
                 {
+                    docId = 0;
+                    documentPath = null;
                     return false;
                 }
 
@@ -473,6 +474,8 @@ namespace SlowCheetah.VisualStudio
                 }
             }
 
+            docId = 0;
+            documentPath = null;
             return false;
         }
 
