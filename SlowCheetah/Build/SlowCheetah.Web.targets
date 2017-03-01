@@ -1,0 +1,122 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<!--
+***********************************************************************************************
+SlowCheetah.Web.targets
+Logic for Web Project transformations
+Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserved.
+***********************************************************************************************
+-->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <ItemGroup>
+    <!-- This will exclude packageRestore.proj from the web publish process -->
+    <ExcludeFromPackageFiles Include="packageRestore.proj">
+      <FromTarget>Project</FromTarget>
+    </ExcludeFromPackageFiles>
+  </ItemGroup>
+
+  <PropertyGroup>
+
+    <OnAfterPipelinePreDeployCopyAllFilesToOneFolder>
+      $(OnAfterPipelinePreDeployCopyAllFilesToOneFolder);
+      CopyTransformFilesWap;
+    </OnAfterPipelinePreDeployCopyAllFilesToOneFolder>
+
+    <CopyAllFilesToSingleFolderForMsdeploy>
+      $(CopyAllFilesToSingleFolderForMsdeploy);
+      CopyTransformFilesWap;
+    </CopyAllFilesToSingleFolderForMsdeploy>
+
+    <CopyTransformFilesWapDependsOn>
+      CoreCopyTransformFilesWap;
+      CopyTransformFileWapPublishProfile;
+    </CopyTransformFilesWapDependsOn>
+
+    <CoreCopyTransformFilesWapDependsOn>
+      DiscoverFilesToTransform;
+    </CoreCopyTransformFilesWapDependsOn>
+
+    <!-- For VS2012 -->
+    <PipelineCopyAllFilesToOneFolderForMsdeployDependsOn>
+      $(PipelineCopyAllFilesToOneFolderForMsdeployDependsOn);
+      CopyTransformFilesWap
+    </PipelineCopyAllFilesToOneFolderForMsdeployDependsOn>
+
+    <!-- Required for File System -->
+    <PipelinePreDeployCopyAllFilesToOneFolderDependsOn>
+      $(PipelinePreDeployCopyAllFilesToOneFolderDependsOn);
+      CopyTransformFilesWap;
+    </PipelinePreDeployCopyAllFilesToOneFolderDependsOn>
+
+    <!-- required for FS support from the VS publish dialog -->
+    <OnAfterCopyAllFilesToSingleFolderForPackage>
+      $(OnAfterCopyAllFilesToSingleFolderForPackage);
+      CopyTransformFilesWap;
+    </OnAfterCopyAllFilesToSingleFolderForPackage>
+  </PropertyGroup>
+
+  <Target Name="CopyTransformFilesWap" DependsOnTargets="$(CopyTransformFilesWapDependsOn)"/>
+
+  <Target Name="CoreCopyTransformFilesWap"
+         DependsOnTargets="$(CoreCopyTransformFilesWapDependsOn)">
+
+    <ItemGroup>
+      <_TmpLinkFiles Remove="@(_TmpLinkFiles)" />
+      <_TmpLinkFiles Include="@(_FilesToTransformNotAppConfig->'%(Link)')" />
+    </ItemGroup>
+
+    <!-- This will ignore link files and the second one will handle them -->
+    <MakeDir Directories="@(_FilesToTransformNotAppConfig->'$(_PackageTempDir)\%(RelativeDir)')"
+         Condition="Exists('%(RelativeDir)%(Filename).$(Configuration)%(Extension)')
+                    and '%(Link)' == '' "/>
+
+    <MakeDir Directories="@(_TmpLinkFiles->'$(OutDir)%(RelativeDir)')"
+                 Condition=" '%(Link)'!='' " />
+
+    <!--Make sure that we do not do this for web.config-->
+    <!-- This usage will skip Link files, the task usage below will handle Link files -->
+    <SlowCheetah.TransformXml Source="@(_FilesToTransformNotAppConfig->'%(FullPath)')"
+              Transform="%(RelativeDir)%(Filename).$(Configuration)%(Extension)"
+              Destination="@(_FilesToTransformNotAppConfig->'$(_PackageTempDir)\%(RelativeDir)%(Filename)%(Extension)')"
+              Condition=" '%(Filename)%(Extension)' != 'web.config' and
+                          Exists('%(RelativeDir)%(Filename).$(Configuration)%(Extension)')
+                          and '%(Link)'=='' " />
+
+    <!-- Transform the Link files, they always go into the root directory -->
+    <SlowCheetah.TransformXml Source="@(_FilesToTransformNotAppConfig->'%(FullPath)')"
+              Transform="%(RelativeDir)%(Filename).$(Configuration)%(Extension)"
+              Destination="@(_FilesToTransformNotAppConfig->'$(_PackageTempDir)\%(Link)')"
+              Condition=" '%(Filename)%(Extension)' != 'web.config' and
+                          Exists('%(RelativeDir)%(Filename).$(Configuration)%(Extension)')
+                          and '%(Link)'!='' " />
+  </Target>
+
+  <Target Name="CopyTransformFileWapPublishProfile" DependsOnTargets="CoreCopyTransformFilesWap">
+
+    <ItemGroup>
+      <_ScWapPubProfileFullPath Include="$(WebPublishProfileFile)"/>
+    </ItemGroup>
+
+    <PropertyGroup>
+      <_WapPubProfile Condition=" '$(_WapPubProfile)'=='' and '@(_ScWapPubProfileFullPath)'!='' ">%(_ScWapPubProfileFullPath.Filename)</_WapPubProfile>
+    </PropertyGroup>
+
+    <!--Make sure that we do not do this for web.config-->
+    <!-- This usage will skip Link files, the task usage below will handle Link files -->
+    <SlowCheetah.TransformXml Source="@(_FilesToTransformNotAppConfig->'$(_PackageTempDir)\%(RelativeDir)%(Filename)%(Extension)')"
+              Transform="%(RelativeDir)%(Filename).$(_WapPubProfile)%(Extension)"
+              Destination="@(_FilesToTransformNotAppConfig->'$(_PackageTempDir)\%(RelativeDir)%(Filename)%(Extension)')"
+              Condition=" '%(Filename)%(Extension)' != 'web.config' and
+                          Exists('%(RelativeDir)%(Filename).$(_WapPubProfile)%(Extension)')
+                          and '%(Link)'=='' and '$(_WapPubProfile)'!='' and '$(_WapPubProfile)'!='$(Configuration)' " />
+
+    <!-- Transform the Link files, they always go into the root directory -->
+    <SlowCheetah.TransformXml Source="@(_FilesToTransformNotAppConfig->'$(_PackageTempDir)\%(Link)')"
+              Transform="%(RelativeDir)%(Filename).$(_WapPubProfile)%(Extension)"
+              Destination="@(_FilesToTransformNotAppConfig->'$(_PackageTempDir)\%(Link)')"
+              Condition=" '%(Filename)%(Extension)' != 'web.config' and
+                          Exists('%(RelativeDir)%(Filename).$(_WapPubProfile)%(Extension)')
+                          and '%(Link)'!=''  and '$(_WapPubProfile)'!='' and '$(_WapPubProfile)'!='$(Configuration)' " />
+  </Target>
+
+</Project>
