@@ -59,6 +59,10 @@
     <Compile Include="Transformer\XmlTransformer.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Build\SlowCheetah.SetupProject.targets">
+      <SubType>Designer</SubType>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Build\SlowCheetah.Web.targets">
       <SubType>Designer</SubType>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
