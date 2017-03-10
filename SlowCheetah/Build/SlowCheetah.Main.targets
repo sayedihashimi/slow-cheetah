@@ -44,8 +44,10 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserve
     </AllowedReferenceRelatedFileExtensions>
   </PropertyGroup>
 
-  <Target Name="CollectTransformFiles" BeforeTargets="ApplyTransforms">
+  <Target Name="ScCollectTransformFiles" BeforeTargets="ScApplyTransforms">
 
+    <Message Text="Collecting Transform files" Importance="low"/>
+      
     <ItemGroup>
       <_FilesToTransform Include="@(None);@(Content);@(Resource);@(EmbeddedResource)"
                          Condition=" '%(TransformOnBuild)' == 'true' ">
@@ -67,14 +69,19 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserve
 
   </Target>
 
-  <Target Name="ApplyTransforms">
+  <Target Name="ScApplyTransforms">
+    
+    <Message Text="Applying Transforms" Importance="high"/>
     
     <MakeDir Directories="@(_FilesToTransform->'%(DestinationDirectory)')" Condition=" '%(DestinationDir)'!='' " />
 
     <SlowCheetah.TransformXml Source="@(_FilesToTransform->'%(SourceFile)')"
                 Transform="%(TransformFile)"
-                Destination="$(DestinationFile)"
+                Destination="%(DestinationFile)"
                 Condition=" Exists('%(TransformFile)')"/>
   </Target>
+  
+  <!-- Import native SlowCheetah behaviour -->
+  <Import Project="$(MSBuildThisFileDirectory)SlowCheetah.App.targets"/>
 
 </Project>
