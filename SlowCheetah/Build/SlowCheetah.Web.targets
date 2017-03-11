@@ -8,57 +8,75 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserve
 -->
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-  <ItemGroup>
-    <!-- This will exclude packageRestore.proj from the web publish process -->
-    <ExcludeFromPackageFiles Include="packageRestore.proj">
-      <FromTarget>Project</FromTarget>
-    </ExcludeFromPackageFiles>
-  </ItemGroup>
-
   <PropertyGroup>
+    <!-- If the project is not web, it is an app-type project -->
+    <WapProjectTypeGuid>349c5851-65df-11da-9384-00065b846f21</WapProjectTypeGuid>
+    <ScIsWap>true</ScIsWap>
+    <ScIsWap Condition="'$(WapProjectTypeGuid)' != '' and '$(ProjectTypeGuids)' != ''">$(ProjectTypeGuids.Contains($(WapProjectTypeGuid)))</ScIsWap>
+  </PropertyGroup>
 
-    <OnAfterPipelinePreDeployCopyAllFilesToOneFolder>
-      $(OnAfterPipelinePreDeployCopyAllFilesToOneFolder);
-      CopyTransformFilesWap;
-    </OnAfterPipelinePreDeployCopyAllFilesToOneFolder>
+  <PropertyGroup Condition="'$(ScIsWap)' == 'true'">
 
-    <CopyAllFilesToSingleFolderForMsdeploy>
-      $(CopyAllFilesToSingleFolderForMsdeploy);
-      CopyTransformFilesWap;
-    </CopyAllFilesToSingleFolderForMsdeploy>
+    <CoreCopyTransformFilesWapDependsOn>
+      ScCollectTransformFiles;
+    </CoreCopyTransformFilesWapDependsOn>
 
     <CopyTransformFilesWapDependsOn>
       CoreCopyTransformFilesWap;
       CopyTransformFileWapPublishProfile;
     </CopyTransformFilesWapDependsOn>
+    
+    <!-- ******************************** -->
 
-    <CoreCopyTransformFilesWapDependsOn>
-      DiscoverFilesToTransform;
-    </CoreCopyTransformFilesWapDependsOn>
+    <OnAfterPipelinePreDeployCopyAllFilesToOneFolder>
+      $(OnAfterPipelinePreDeployCopyAllFilesToOneFolder);
+      <!-- CopyTransformFilesWap; -->
+    </OnAfterPipelinePreDeployCopyAllFilesToOneFolder>
+
+    <CopyAllFilesToSingleFolderForMsdeploy>
+      $(CopyAllFilesToSingleFolderForMsdeploy);
+      <!-- CopyTransformFilesWap; -->
+    </CopyAllFilesToSingleFolderForMsdeploy>
 
     <!-- For VS2012 -->
     <PipelineCopyAllFilesToOneFolderForMsdeployDependsOn>
       $(PipelineCopyAllFilesToOneFolderForMsdeployDependsOn);
-      CopyTransformFilesWap
+      <!-- CopyTransformFilesWap; -->
     </PipelineCopyAllFilesToOneFolderForMsdeployDependsOn>
 
     <!-- Required for File System -->
     <PipelinePreDeployCopyAllFilesToOneFolderDependsOn>
       $(PipelinePreDeployCopyAllFilesToOneFolderDependsOn);
-      CopyTransformFilesWap;
+      <!-- CopyTransformFilesWap; -->
     </PipelinePreDeployCopyAllFilesToOneFolderDependsOn>
 
     <!-- required for FS support from the VS publish dialog -->
     <OnAfterCopyAllFilesToSingleFolderForPackage>
       $(OnAfterCopyAllFilesToSingleFolderForPackage);
-      CopyTransformFilesWap;
+      <!-- CopyTransformFilesWap; -->
     </OnAfterCopyAllFilesToSingleFolderForPackage>
   </PropertyGroup>
 
+  <Target Name="ScCollectWapFiles" DependsOnTargets="ScCollectTransformFiles" BeforeTargets="ScApplyTransforms">
+    
+    <ItemGroup>
+      
+      <!-- Do not transform the web.config file -->
+      <_FilesToTransform Remove="@(_FilesToTransform)" Condition="'%(Filename)%(Extension)' == 'web.config'"/>
+      
+      <!-- The output for the transformation should be the temporary package directory -->
+      <_FilesToTransform>
+        <DestinationDir Condition="Exists('%(TransformFile)') and '%(Link)' == ''">$(_PackageTempDir)\%(RelativeDir)</DestinationDir>
+        <DestinationFile>$(_PackageTempDir)\%(RelativeDir)%(Filename)%(Extension)</DestinationFile>
+        <DestinationFile Condition="'%(Link)' != ''">$(_PackageTempDir)\%(Link)</DestinationFile>
+      </_FilesToTransform>
+    </ItemGroup>
+    
+  </Target>
+
   <Target Name="CopyTransformFilesWap" DependsOnTargets="$(CopyTransformFilesWapDependsOn)"/>
 
-  <Target Name="CoreCopyTransformFilesWap"
-         DependsOnTargets="$(CoreCopyTransformFilesWapDependsOn)">
+  <Target Name="CoreCopyTransformFilesWap" DependsOnTargets="$(CoreCopyTransformFilesWapDependsOn)">
 
     <ItemGroup>
       <_TmpLinkFiles Remove="@(_TmpLinkFiles)" />

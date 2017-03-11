@@ -46,23 +46,15 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserve
 
   <Target Name="ScCollectTransformFiles" BeforeTargets="ScApplyTransforms">
 
-    <Message Text="Collecting Transform files" Importance="low"/>
+    <Message Text="SlowCheetah: Collecting Transform files" Importance="high"/>
       
     <ItemGroup>
       <_FilesToTransform Include="@(None);@(Content);@(Resource);@(EmbeddedResource)"
                          Condition=" '%(TransformOnBuild)' == 'true' ">
-        <Link>%(Link)</Link>
         <SourceFile>%(FullPath)</SourceFile>
         <TransformFile>%(RelativeDir)%(Filename).$(Configuration)%(Extension)</TransformFile>
         <DestinationFile>$(OutDir)%(RelativeDir)%(Filename)%(Extension)</DestinationFile>
         <DestinationFile Condition="'%(Link)' != ''">$(OutDir)%(Link)</DestinationFile>
-        <DestinationDir></DestinationDir>
-        <DestinationDir Condition="Exists('%(RelativeDir)%(Filename).$(Configuration)%(Extension)') and '%(Link)'=='' ">
-          $(OutDir)%(RelativeDir)
-        </DestinationDir>
-        <DestinationDir Condition=" '%(Link)'!='' ">
-          $(OutDir)%(RelativeDir)
-        </DestinationDir>
       </_FilesToTransform>
 
     </ItemGroup>
@@ -71,9 +63,12 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserve
 
   <Target Name="ScApplyTransforms">
     
-    <Message Text="Applying Transforms" Importance="high"/>
+    <Message Text="SlowCheetah: Applying Transforms" Importance="high"/>
+    <ItemGroup>
+      <_DirsToCreate Include="@(_FilesToTransform -> '%(DestinationFile)')"/>  
+    </ItemGroup>
     
-    <MakeDir Directories="@(_FilesToTransform->'%(DestinationDirectory)')" Condition=" '%(DestinationDir)'!='' " />
+    <MakeDir Directories="@(_DirsToCreate->'%(RelativeDir)')" Condition=" !Exists('%(RelativeDir)') " />
 
     <SlowCheetah.TransformXml Source="@(_FilesToTransform->'%(SourceFile)')"
                 Transform="%(TransformFile)"
