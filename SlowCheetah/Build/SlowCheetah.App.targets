@@ -12,7 +12,7 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserve
     <!-- If the project is not web, it is an app-type project -->
     <WapProjectTypeGuid>349c5851-65df-11da-9384-00065b846f21</WapProjectTypeGuid>
     <ScIsApp>true</ScIsApp>
-    <ScIsApp Condition="'$(WapProjectTypeGuid)' != '' and '$(ProjectTypeGuids)' != ''">$(!ProjectTypeGuids.Contains($(WapProjectTypeGuid)))</ScIsApp>
+    <ScIsApp Condition="'$(ScIsWap)' == true">false</ScIsApp>
   
     <!-- For these type of apps, apply transforms after the build -->
     <BuildDependsOn Condition="'$(ScIsApp)' == 'true'">
@@ -25,7 +25,7 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserve
     
   </PropertyGroup>
 
-  <Target Name="ScCollectAppFiles" DependsOnTargets="ScCollectTransformFiles" BeforeTargets="ScApplyTransforms">
+  <Target Name="ScCollectAppFiles" DependsOnTargets="ScCollectTransformFiles" BeforeTargets="ScApplyTransforms" Condition="'$(ScIsApp)' == 'true'">
 
     <Message Text="SlowCheetah: Collecting App files" Importance="high"/>
     
@@ -66,7 +66,7 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserve
         
   </Target>
 
-  <Target Name="ScTransformAppConfig" DependsOnTargets="ScCollectAppFiles" BeforeTargets="_CopyAppConfigFile">
+  <Target Name="ScTransformAppConfig" DependsOnTargets="ScCollectAppFiles" BeforeTargets="_CopyAppConfigFile" Condition="'$(ScIsApp)' == 'true'">
 
     <Message Text="Applying app transformations: $(_Sc_HasAppConfigTransform)" Importance="high"/>
 

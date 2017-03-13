@@ -11,54 +11,51 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserve
   <PropertyGroup>
     <!-- If the project is not web, it is an app-type project -->
     <WapProjectTypeGuid>349c5851-65df-11da-9384-00065b846f21</WapProjectTypeGuid>
-    <ScIsWap>true</ScIsWap>
+    <ScIsWap>false</ScIsWap>
     <ScIsWap Condition="'$(WapProjectTypeGuid)' != '' and '$(ProjectTypeGuids)' != ''">$(ProjectTypeGuids.Contains($(WapProjectTypeGuid)))</ScIsWap>
   </PropertyGroup>
 
+  <!--<ItemDefinitionGroup>
+    <_FilesToTransform>
+      <PublishTransformFile></PublishTransformFile>
+    </_FilesToTransform>
+  </ItemDefinitionGroup>-->
+
   <PropertyGroup Condition="'$(ScIsWap)' == 'true'">
-
-    <CoreCopyTransformFilesWapDependsOn>
-      ScCollectTransformFiles;
-    </CoreCopyTransformFilesWapDependsOn>
-
-    <CopyTransformFilesWapDependsOn>
-      CoreCopyTransformFilesWap;
-      CopyTransformFileWapPublishProfile;
-    </CopyTransformFilesWapDependsOn>
-    
-    <!-- ******************************** -->
 
     <OnAfterPipelinePreDeployCopyAllFilesToOneFolder>
       $(OnAfterPipelinePreDeployCopyAllFilesToOneFolder);
-      <!-- CopyTransformFilesWap; -->
+      ScApplyTransforms;
     </OnAfterPipelinePreDeployCopyAllFilesToOneFolder>
 
     <CopyAllFilesToSingleFolderForMsdeploy>
       $(CopyAllFilesToSingleFolderForMsdeploy);
-      <!-- CopyTransformFilesWap; -->
+      ScApplyTransforms;
     </CopyAllFilesToSingleFolderForMsdeploy>
 
     <!-- For VS2012 -->
     <PipelineCopyAllFilesToOneFolderForMsdeployDependsOn>
       $(PipelineCopyAllFilesToOneFolderForMsdeployDependsOn);
-      <!-- CopyTransformFilesWap; -->
+      ScApplyTransforms;
     </PipelineCopyAllFilesToOneFolderForMsdeployDependsOn>
 
     <!-- Required for File System -->
     <PipelinePreDeployCopyAllFilesToOneFolderDependsOn>
       $(PipelinePreDeployCopyAllFilesToOneFolderDependsOn);
-      <!-- CopyTransformFilesWap; -->
+      ScApplyTransforms;
     </PipelinePreDeployCopyAllFilesToOneFolderDependsOn>
 
     <!-- required for FS support from the VS publish dialog -->
     <OnAfterCopyAllFilesToSingleFolderForPackage>
       $(OnAfterCopyAllFilesToSingleFolderForPackage);
-      <!-- CopyTransformFilesWap; -->
+      ScApplyTransforms;
     </OnAfterCopyAllFilesToSingleFolderForPackage>
   </PropertyGroup>
 
-  <Target Name="ScCollectWapFiles" DependsOnTargets="ScCollectTransformFiles" BeforeTargets="ScApplyTransforms">
-    
+  <Target Name="ScCollectWapFiles" DependsOnTargets="ScCollectTransformFiles" BeforeTargets="ScApplyTransforms" Condition="'$(ScIsWap)' == 'true'">
+
+    <Message Text="SlowCheetah: Collecting Web files: $(ScIsWap)" Importance="high"/>
+
     <ItemGroup>
       
       <!-- Do not transform the web.config file -->
@@ -66,7 +63,6 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserve
       
       <!-- The output for the transformation should be the temporary package directory -->
       <_FilesToTransform>
-        <DestinationDir Condition="Exists('%(TransformFile)') and '%(Link)' == ''">$(_PackageTempDir)\%(RelativeDir)</DestinationDir>
         <DestinationFile>$(_PackageTempDir)\%(RelativeDir)%(Filename)%(Extension)</DestinationFile>
         <DestinationFile Condition="'%(Link)' != ''">$(_PackageTempDir)\%(Link)</DestinationFile>
       </_FilesToTransform>
@@ -74,67 +70,32 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserve
     
   </Target>
 
-  <Target Name="CopyTransformFilesWap" DependsOnTargets="$(CopyTransformFilesWapDependsOn)"/>
+  <Target Name="ScTransformWapPublishProfile" DependsOnTargets="ScApplyTransforms" Condition="'$(ScIsWap)' == 'true'">
 
-  <Target Name="CoreCopyTransformFilesWap" DependsOnTargets="$(CoreCopyTransformFilesWapDependsOn)">
+    <Message Text="SlowCheetah: Applying Publish transforms" Importance="high"/>
 
-    <ItemGroup>
-      <_TmpLinkFiles Remove="@(_TmpLinkFiles)" />
-      <_TmpLinkFiles Include="@(_FilesToTransformNotAppConfig->'%(Link)')" />
-    </ItemGroup>
-
-    <!-- This will ignore link files and the second one will handle them -->
-    <MakeDir Directories="@(_FilesToTransformNotAppConfig->'$(_PackageTempDir)\%(RelativeDir)')"
-         Condition="Exists('%(RelativeDir)%(Filename).$(Configuration)%(Extension)')
-                    and '%(Link)' == '' "/>
-
-    <MakeDir Directories="@(_TmpLinkFiles->'$(OutDir)%(RelativeDir)')"
-                 Condition=" '%(Link)'!='' " />
-
-    <!--Make sure that we do not do this for web.config-->
-    <!-- This usage will skip Link files, the task usage below will handle Link files -->
-    <SlowCheetah.TransformXml Source="@(_FilesToTransformNotAppConfig->'%(FullPath)')"
-              Transform="%(RelativeDir)%(Filename).$(Configuration)%(Extension)"
-              Destination="@(_FilesToTransformNotAppConfig->'$(_PackageTempDir)\%(RelativeDir)%(Filename)%(Extension)')"
-              Condition=" '%(Filename)%(Extension)' != 'web.config' and
-                          Exists('%(RelativeDir)%(Filename).$(Configuration)%(Extension)')
-                          and '%(Link)'=='' " />
-
-    <!-- Transform the Link files, they always go into the root directory -->
-    <SlowCheetah.TransformXml Source="@(_FilesToTransformNotAppConfig->'%(FullPath)')"
-              Transform="%(RelativeDir)%(Filename).$(Configuration)%(Extension)"
-              Destination="@(_FilesToTransformNotAppConfig->'$(_PackageTempDir)\%(Link)')"
-              Condition=" '%(Filename)%(Extension)' != 'web.config' and
-                          Exists('%(RelativeDir)%(Filename).$(Configuration)%(Extension)')
-                          and '%(Link)'!='' " />
-  </Target>
-
-  <Target Name="CopyTransformFileWapPublishProfile" DependsOnTargets="CoreCopyTransformFilesWap">
-
+    <!-- Get the name of the publish profile if it is not already set -->
     <ItemGroup>
       <_ScWapPubProfileFullPath Include="$(WebPublishProfileFile)"/>
     </ItemGroup>
-
+    
     <PropertyGroup>
-      <_WapPubProfile Condition=" '$(_WapPubProfile)'=='' and '@(_ScWapPubProfileFullPath)'!='' ">%(_ScWapPubProfileFullPath.Filename)</_WapPubProfile>
+      <_WapPubProfile Condition="'$(_WapPubProfile)' == '' and '@(_ScWapPubProfileFullPath)' != ''">%(_ScWapPubProfileFullPath.Filename)</_WapPubProfile>
     </PropertyGroup>
 
-    <!--Make sure that we do not do this for web.config-->
-    <!-- This usage will skip Link files, the task usage below will handle Link files -->
-    <SlowCheetah.TransformXml Source="@(_FilesToTransformNotAppConfig->'$(_PackageTempDir)\%(RelativeDir)%(Filename)%(Extension)')"
-              Transform="%(RelativeDir)%(Filename).$(_WapPubProfile)%(Extension)"
-              Destination="@(_FilesToTransformNotAppConfig->'$(_PackageTempDir)\%(RelativeDir)%(Filename)%(Extension)')"
-              Condition=" '%(Filename)%(Extension)' != 'web.config' and
-                          Exists('%(RelativeDir)%(Filename).$(_WapPubProfile)%(Extension)')
-                          and '%(Link)'=='' and '$(_WapPubProfile)'!='' and '$(_WapPubProfile)'!='$(Configuration)' " />
+    <!-- Set the publish transformation file -->
+    <ItemGroup>
+      <_FilesToTransform>
+        <PublishTransformFile>%(RelativeDir)%(Filename).$(_WapPubProfile)%(Extension)</PublishTransformFile>
+      </_FilesToTransform>
+    </ItemGroup>
 
-    <!-- Transform the Link files, they always go into the root directory -->
-    <SlowCheetah.TransformXml Source="@(_FilesToTransformNotAppConfig->'$(_PackageTempDir)\%(Link)')"
-              Transform="%(RelativeDir)%(Filename).$(_WapPubProfile)%(Extension)"
-              Destination="@(_FilesToTransformNotAppConfig->'$(_PackageTempDir)\%(Link)')"
-              Condition=" '%(Filename)%(Extension)' != 'web.config' and
-                          Exists('%(RelativeDir)%(Filename).$(_WapPubProfile)%(Extension)')
-                          and '%(Link)'!=''  and '$(_WapPubProfile)'!='' and '$(_WapPubProfile)'!='$(Configuration)' " />
+    <!-- Transform the previously transformed file according to the publish profile -->
+    <SlowCheetah.TransformXml Source="@(_FilesToTransform->'%(DestinationFile)')"
+                              Transform="%(PublishTransformFile)"
+                              Destinaton="%(DestinationFile)"
+                              Condition="Exists('%(PublishTransformFile)') and '$(_WapPubProfile)'!='' and '$(_WapPubProfile)'!='$(Configuration)'"/>
+
   </Target>
 
 </Project>

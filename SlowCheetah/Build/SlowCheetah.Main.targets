@@ -64,19 +64,22 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserve
   <Target Name="ScApplyTransforms">
     
     <Message Text="SlowCheetah: Applying Transforms" Importance="high"/>
+    
+    <!-- Get the directories that must be created -->
     <ItemGroup>
-      <_DirsToCreate Include="@(_FilesToTransform -> '%(DestinationFile)')"/>  
+      <_DirsToCreate Include="@(_FilesToTransform -> '%(DestinationFile)')" Condition="Exists('%(TransformFile)')"/>  
     </ItemGroup>
     
     <MakeDir Directories="@(_DirsToCreate->'%(RelativeDir)')" Condition=" !Exists('%(RelativeDir)') " />
 
     <SlowCheetah.TransformXml Source="@(_FilesToTransform->'%(SourceFile)')"
-                Transform="%(TransformFile)"
-                Destination="%(DestinationFile)"
-                Condition=" Exists('%(TransformFile)')"/>
+                              Transform="%(TransformFile)"
+                              Destination="%(DestinationFile)"
+                              Condition=" Exists('%(TransformFile)')"/>
   </Target>
   
   <!-- Import native SlowCheetah behaviour -->
-  <Import Project="$(MSBuildThisFileDirectory)SlowCheetah.App.targets"/>
+  <Import Project="$(MSBuildThisFileDirectory)SlowCheetah.Web.targets"/>
+  <Import Project="$(MSBuildThisFileDirectory)SlowCheetah.App.targets"/>  
 
 </Project>
