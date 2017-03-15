@@ -21,10 +21,12 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserve
       ScAfterBuiltProjectOutputGroup;
     </BuiltProjectOutputGroupDependsOn>
 
+    <!-- Execute after trasnformations -->
     <ScAfterBuiltProjectOutputGroupDependsOn>
       ScApplyTransforms;
     </ScAfterBuiltProjectOutputGroupDependsOn>
 
+    <!-- If the project is an app, also depends on the app config transformation -->
     <ScAfterBuiltProjectOutputGroupDependsOn Condition=" '$(ScIsApp)'=='true'">
       $(AfterBuiltProjectOutputGroupDependsOn);
       ScTransformAppConfig;
@@ -57,6 +59,7 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserve
         <OriginalItemSpec>$(AppConfig)</OriginalItemSpec>
       </BuiltProjectOutputGroupOutput>
 
+      <!-- Add the correct files to the project output group -->
       <BuiltProjectOutputGroupOutput Include="@(ScFilesToTransform->'%(FullPathToItem)')"
                                      Condition=" '%(ScFilesToTransform.Link)'==''">
         <OriginalItemSpec>@(ScFilesToTransform->'$(OutDir)%(RelativeDir)%(Filename)%(Extension)')</OriginalItemSpec>

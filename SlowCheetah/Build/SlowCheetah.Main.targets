@@ -73,10 +73,10 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserve
     
     <!-- Get the directories that must be created -->
     <ItemGroup>
-      <ScDirsToCreate Include="@(ScFilesToTransform -> '%(DestinationFile)')" Condition="Exists('%(TransformFile)')"/>  
+      <_ScDirsToCreate Include="@(ScFilesToTransform -> '%(DestinationFile)')" Condition="Exists('%(TransformFile)')"/>  
     </ItemGroup>
     
-    <MakeDir Directories="@(ScDirsToCreate->'%(RelativeDir)')" Condition=" !Exists('%(RelativeDir)') " />
+    <MakeDir Directories="@(_ScDirsToCreate->'%(RelativeDir)')" Condition=" !Exists('%(RelativeDir)') " />
 
     <SlowCheetah.TransformXml Source="@(ScFilesToTransform->'%(SourceFile)')"
                               Transform="%(TransformFile)"
