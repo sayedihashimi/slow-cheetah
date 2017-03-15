@@ -36,43 +36,49 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserve
   </ItemDefinitionGroup>
 
   <PropertyGroup>
+
+    <BuildDependsOn>
+      $(BuildDependsOn);
+      ScApplyTransforms;
+    </BuildDependsOn>
+    
     <!-- References .dll.config files in referenced projects -->
     <ScAllowCopyReferencedConfig Condition=" '$(ScAllowCopyReferencedConfig)'=='' ">true</ScAllowCopyReferencedConfig>
     <AllowedReferenceRelatedFileExtensions Condition=" '$(ScAllowCopyReferencedConfig)'=='true' ">
       $(AllowedReferenceRelatedFileExtensions);
-      .dll.config
+      .dll.config;
     </AllowedReferenceRelatedFileExtensions>
   </PropertyGroup>
 
   <Target Name="ScCollectTransformFiles" BeforeTargets="ScApplyTransforms">
 
-    <Message Text="SlowCheetah: Collecting Transform files" Importance="high"/>
+    <Message Text="SlowCheetah: Collecting Transform files" Importance="low"/>
       
     <ItemGroup>
-      <_FilesToTransform Include="@(None);@(Content);@(Resource);@(EmbeddedResource)"
+      <ScFilesToTransform Include="@(None);@(Content);@(Resource);@(EmbeddedResource)"
                          Condition=" '%(TransformOnBuild)' == 'true' ">
         <SourceFile>%(FullPath)</SourceFile>
         <TransformFile>%(RelativeDir)%(Filename).$(Configuration)%(Extension)</TransformFile>
         <DestinationFile>$(OutDir)%(RelativeDir)%(Filename)%(Extension)</DestinationFile>
         <DestinationFile Condition="'%(Link)' != ''">$(OutDir)%(Link)</DestinationFile>
-      </_FilesToTransform>
+      </ScFilesToTransform>
 
     </ItemGroup>
 
   </Target>
 
-  <Target Name="ScApplyTransforms">
+  <Target Name="ScApplyTransforms" AfterTargets="CopyFilesToOutputDirectory">
     
-    <Message Text="SlowCheetah: Applying Transforms" Importance="high"/>
+    <Message Text="SlowCheetah: Applying Transforms" Importance="low"/>
     
     <!-- Get the directories that must be created -->
     <ItemGroup>
-      <_DirsToCreate Include="@(_FilesToTransform -> '%(DestinationFile)')" Condition="Exists('%(TransformFile)')"/>  
+      <ScDirsToCreate Include="@(ScFilesToTransform -> '%(DestinationFile)')" Condition="Exists('%(TransformFile)')"/>  
     </ItemGroup>
     
-    <MakeDir Directories="@(_DirsToCreate->'%(RelativeDir)')" Condition=" !Exists('%(RelativeDir)') " />
+    <MakeDir Directories="@(ScDirsToCreate->'%(RelativeDir)')" Condition=" !Exists('%(RelativeDir)') " />
 
-    <SlowCheetah.TransformXml Source="@(_FilesToTransform->'%(SourceFile)')"
+    <SlowCheetah.TransformXml Source="@(ScFilesToTransform->'%(SourceFile)')"
                               Transform="%(TransformFile)"
                               Destination="%(DestinationFile)"
                               Condition=" Exists('%(TransformFile)')"/>
@@ -80,6 +86,8 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserve
   
   <!-- Import native SlowCheetah behaviour -->
   <Import Project="$(MSBuildThisFileDirectory)SlowCheetah.Web.targets"/>
-  <Import Project="$(MSBuildThisFileDirectory)SlowCheetah.App.targets"/>  
+  <Import Project="$(MSBuildThisFileDirectory)SlowCheetah.App.targets"/>
+  <Import Project="$(MSBuildThisFileDirectory)SlowCheetah.SetupProject.targets"/>
+  <Import Project="$(MSBuildThisFileDirectory)SlowCheetah.ClickOnce.targets"/>
 
 </Project>

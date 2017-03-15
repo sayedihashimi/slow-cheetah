@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<!--
+***********************************************************************************************
+SlowCheetah.ClickOnce.targets
+Adds targets for ClickOnce logic
+Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserved.
+***********************************************************************************************
+-->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup Condition="'$(ScIsWap)' == true">
+    <BuildDependsOn>
+      $(BuildDependsOn);
+      ScReplaceAppConfigItem;
+    </BuildDependsOn>
+  </PropertyGroup>
+
+  <Target Name="ScReplaceAppConfigItem" BeforeTargets="_DeploymentComputeClickOnceManifestInfo;BuiltProjectOutputGroup" DependsOnTargets="ScTransformAppConfig"/>
+
+  <Target Name="SlowCheetah_ClickOnceLooseFileUpdate" AfterTargets="_DeploymentComputeClickOnceManifestInfo" DependsOnTargets="ScCollectAppFiles">
+    <ItemGroup>
+      <!-- For non app.config files which are being transformed we need to remove the original item and replace it with the transformed one -->
+      <_DeploymentManifestFiles Remove="%(ScFilesToTransform.Identity)" />
+      
+      <!-- Implementation for non-Link files -->
+      <_DeploymentManifestFiles Include="@(ScFilesToTransform->'$(OutDir)%(RelativeDir)%(Filename)%(Extension)')" Condition="'%(ScFilesToTransform.Link)' == ''">
+        <TargetPath Condition="'%(ScFilesToTransform.Link)' == ''">%(RelativeDir)%(Filename)%(Extension)</TargetPath>
+      </_DeploymentManifestFiles>
+
+      <!-- Implementation for Linked files -->
+      <_DeploymentManifestFiles Include="@(ScFilesToTransform->'$(OutDir)%(Link)')" Condition="'%(ScFilesToTransform.Link)' != ''">
+        <TargetPath>%(ScFilesToTransform.Link)</TargetPath>
+      </_DeploymentManifestFiles>
+    </ItemGroup>
+  </Target>
+
+  </Project>
