@@ -85,9 +85,6 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserve
   </Target>
   
   <!-- Import native SlowCheetah behaviour -->
-  <Import Project="$(MSBuildThisFileDirectory)SlowCheetah.Web.targets"/>
-  <Import Project="$(MSBuildThisFileDirectory)SlowCheetah.App.targets"/>
-  <Import Project="$(MSBuildThisFileDirectory)SlowCheetah.SetupProject.targets"/>
-  <Import Project="$(MSBuildThisFileDirectory)SlowCheetah.ClickOnce.targets"/>
-
+  <Import Project="$(MSBuildThisFileDirectory)SlowCheetah.*.targets"/>
+  
 </Project>
