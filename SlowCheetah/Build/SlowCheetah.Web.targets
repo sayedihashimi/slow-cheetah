@@ -49,7 +49,7 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserve
     </OnAfterCopyAllFilesToSingleFolderForPackage>
   </PropertyGroup>
 
-  <Target Name="ScCollectWapFiles" DependsOnTargets="ScCollectTransformFiles" BeforeTargets="ScApplyWebTransforms">
+  <Target Name="ScCollectWebFiles" DependsOnTargets="ScCollectTransformFiles" BeforeTargets="ScApplyWebTransforms">
 
     <Message Text="SlowCheetah: Collecting Web files: $(ScIsWap)" Importance="low"/>
 
@@ -59,7 +59,7 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserve
     </ItemGroup>
 
     <PropertyGroup>
-      <_WapPubProfile Condition="'$(_WapPubProfile)' == '' and '@(ScWapPubProfileFullPath)' != ''">%(ScWapPubProfileFullPath.Filename)</_WapPubProfile>
+      <ScPubProfile Condition="'$(ScPubProfile)' == '' and '@(ScWapPubProfileFullPath)' != ''">%(ScWapPubProfileFullPath.Filename)</ScPubProfile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -71,7 +71,7 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserve
       <ScFilesToTransform>
         <PublishDestinationFile>$(_PackageTempDir)\%(RelativeDir)%(Filename)%(Extension)</PublishDestinationFile>
         <PublishDestinationFile Condition="'%(Link)' != ''">$(_PackageTempDir)\%(Link)</PublishDestinationFile>
-        <PublishTransformFile>%(RelativeDir)%(Filename).$(_WapPubProfile)%(Extension)</PublishTransformFile>
+        <PublishTransformFile>%(RelativeDir)%(Filename).$(ScPubProfile)%(Extension)</PublishTransformFile>
       </ScFilesToTransform>
     </ItemGroup>
     
@@ -79,7 +79,7 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserve
 
   <Target Name="ScApplyWebTransforms" DependsOnTargets="ScApplyTransforms">
 
-    <Message Text="SlowCheetah: Applying Web transforms for publishing: $(_WapPubProfile)" Importance="low"/>
+    <Message Text="SlowCheetah: Applying Web transforms for publishing: $(ScPubProfile)" Importance="low"/>
     
     <!-- Get the directories that must be created -->
     <ItemGroup>
@@ -96,7 +96,7 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserve
     <SlowCheetah.TransformXml Source="@(ScFilesToTransform->'%(PublishDestinationFile)')"
                               Transform="%(PublishTransformFile)"
                               Destination="%(PublishDestinationFile)"
-                              Condition=" Exists('%(PublishTransformFile)') and '$(_WapPubProfile)'!='' and '$(_WapPubProfile)' != '$(Configuration)'"/>
+                              Condition=" Exists('%(PublishTransformFile)') and '$(ScPubProfile)'!='' and '$(ScPubProfile)' != '$(Configuration)'"/>
   </Target>
 
 </Project>
