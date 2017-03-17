@@ -16,7 +16,6 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserve
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(ScIsWap)' == 'true'">
-  
     <!-- For web projects, web.config is considere the app config file -->
     <ScAppConfigName>web.config</ScAppConfigName>
 
@@ -63,10 +62,9 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserve
     </PropertyGroup>
 
     <ItemGroup>
-      
       <!-- Do not transform the web.config file -->
       <ScFilesToTransform Remove="@(ScFilesToTransform)" Condition="'%(Filename)%(Extension)' == 'web.config'"/>
-      
+
       <!-- The output for the transformation should be the temporary package directory -->
       <ScFilesToTransform>
         <PublishDestinationFile>$(_PackageTempDir)\%(RelativeDir)%(Filename)%(Extension)</PublishDestinationFile>
@@ -74,16 +72,16 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserve
         <PublishTransformFile>%(RelativeDir)%(Filename).$(ScPubProfile)%(Extension)</PublishTransformFile>
       </ScFilesToTransform>
     </ItemGroup>
-    
+
   </Target>
 
   <Target Name="ScApplyWebTransforms" DependsOnTargets="ScApplyTransforms">
 
     <Message Text="SlowCheetah: Applying Web transforms for publishing: $(ScPubProfile)" Importance="low"/>
-    
+
     <!-- Get the directories that must be created -->
     <ItemGroup>
-      <_ScPublishDirsToCreate Include="@(ScFilesToTransform -> '%(PublishDestinationFile)')" Condition="Exists('%(TransformFile)') or Exists('%(PublishTransformFile)')"/>  
+      <_ScPublishDirsToCreate Include="@(ScFilesToTransform -> '%(PublishDestinationFile)')" Condition="Exists('%(TransformFile)') or Exists('%(PublishTransformFile)')"/>
     </ItemGroup>
 
     <MakeDir Directories="@(_ScPublishDirsToCreate->'%(RelativeDir)')" Condition=" !Exists('%(RelativeDir)') " />
@@ -97,6 +95,7 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserve
                               Transform="%(PublishTransformFile)"
                               Destination="%(PublishDestinationFile)"
                               Condition=" Exists('%(PublishTransformFile)') and '$(ScPubProfile)'!='' and '$(ScPubProfile)' != '$(Configuration)'"/>
+
   </Target>
 
 </Project>

@@ -13,7 +13,6 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserve
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(ScEnableSetupProjects)'=='true'">
-
     <AddAppConfigToBuildOutputs>false</AddAppConfigToBuildOutputs>
 
     <BuiltProjectOutputGroupDependsOn>
@@ -53,7 +52,6 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserve
     </ItemGroup>
 
     <ItemGroup>
-
       <BuiltProjectOutputGroupOutput Include="@(_TmpAppConfig->'%(FullPath)')">
         <!-- For compatibility with 2.0 -->
         <OriginalItemSpec>$(AppConfig)</OriginalItemSpec>
@@ -71,9 +69,8 @@ Copyright (C) Sayed Ibrahim Hashimi, Chuck England 2011-2013. All rights reserve
         <OriginalItemSpec>@(ScFilesToTransform->'$(OutDir)%(Link)')</OriginalItemSpec>
         <TargetPath>@(ScFilesToTransform->'%(Link)')</TargetPath>
       </BuiltProjectOutputGroupOutput>
-
     </ItemGroup>
 
   </Target>
-  
+
 </Project>
