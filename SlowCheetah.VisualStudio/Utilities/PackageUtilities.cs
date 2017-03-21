@@ -132,7 +132,9 @@ namespace SlowCheetah.VisualStudio
                 return false;
             }
 
-            if (!Path.GetExtension(documentName).Equals(Path.GetExtension(transformName), StringComparison.OrdinalIgnoreCase))
+            var documentTypeMatchesTransformType = Path.GetExtension(documentName).Equals(Path.GetExtension(transformName), StringComparison.OrdinalIgnoreCase);
+            var documentTypeDoesNotMatchTransformType = !documentTypeMatchesTransformType;
+            if (documentTypeDoesNotMatchTransformType)
             {
                 return false;
             }
