@@ -368,16 +368,7 @@ namespace SlowCheetah.VisualStudio
                 string content = this.BuildXdtContent(itemFullPath);
                 IEnumerable<string> configs = ProjectUtilities.GetProjectConfigurations(selectedProjectItem.ContainingProject);
 
-                List<string> transformsToCreate = null;
-                if (configs != null)
-                {
-                    transformsToCreate = configs.ToList();
-                }
-
-                if (transformsToCreate == null)
-                {
-                    transformsToCreate = new List<string>();
-                }
+                List<string> transformsToCreate = GetTransformsFromConfigs(configs);
 
                 // if it is a web project we should add publish profile specific transforms as well
                 var publishProfileTransforms = this.GetPublishProfileTransforms(hierarchy, projectFullPath);
@@ -395,6 +386,18 @@ namespace SlowCheetah.VisualStudio
                     buildPropertyStorage.SetItemAttribute(addedFileId, IsTransformFile, "True");
                     buildPropertyStorage.SetItemAttribute(addedFileId, DependentUpon, itemFilenameExtension);
                 }
+            }
+        }
+
+        private List<string> GetTransformsFromConfigs(IEnumerable<string> configs)
+        {
+            if (configs == null)
+            {
+                return new List<string>();
+            }
+            else
+            {
+                return configs.ToList();
             }
         }
 
@@ -622,7 +625,8 @@ namespace SlowCheetah.VisualStudio
 
             foreach (string supportedExtension in ProjectUtilities.GetSupportedProjectExtensions((IVsSettingsManager)this.GetService(typeof(SVsSettingsManager))))
             {
-                if (projectExtension.Equals(supportedExtension, StringComparison.InvariantCultureIgnoreCase))
+                var extensionIsSupported = projectExtension.Equals(supportedExtension, StringComparison.InvariantCultureIgnoreCase);
+                if (extensionIsSupported)
                 {
                     return true;
                 }

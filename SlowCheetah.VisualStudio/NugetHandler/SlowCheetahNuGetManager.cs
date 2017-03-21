@@ -87,13 +87,15 @@ namespace SlowCheetah.VisualStudio
         {
             string propertyValue;
             buildPropertyStorage.GetPropertyValue("SlowCheetahImport", null, (uint)_PersistStorageType.PST_PROJECT_FILE, out propertyValue);
-            if (!string.IsNullOrEmpty(propertyValue))
+            var propertyValueIsPopulated = !string.IsNullOrEmpty(propertyValue);
+            if (propertyValueIsPopulated)
             {
                 return true;
             }
 
             buildPropertyStorage.GetPropertyValue("SlowCheetahTargets", null, (uint)_PersistStorageType.PST_PROJECT_FILE, out propertyValue);
-            if (!string.IsNullOrEmpty(propertyValue))
+            propertyValueIsPopulated = !string.IsNullOrEmpty(propertyValue);
+            if (propertyValueIsPopulated)
             {
                 return true;
             }
@@ -153,7 +155,8 @@ namespace SlowCheetah.VisualStudio
 
             if (needInstall)
             {
-                if (this.HasUserAcceptedWarningMessage(Resources.Resources.NugetInstall_Title, Resources.Resources.NugetInstall_Text))
+                var userHasAcceptedWarningMessage = this.HasUserAcceptedWarningMessage(Resources.Resources.NugetInstall_Title, Resources.Resources.NugetInstall_Text);
+                if (userHasAcceptedWarningMessage)
                 {
                     // Gets the general output pane to inform user of installation
                     IVsOutputWindowPane outputWindow = (IVsOutputWindowPane)this.package.GetService(typeof(SVsGeneralOutputWindowPane));
@@ -202,7 +205,8 @@ namespace SlowCheetah.VisualStudio
             // This is done on the UI thread because changes are made to the project file,
             // causing it to be reloaded. To avoid conflicts with NuGet installation,
             // the update is done sequentially
-            if (this.HasUserAcceptedWarningMessage(Resources.Resources.NugetUpdate_Title, Resources.Resources.NugetUpdate_Text))
+            var userHasAcceptedWarningMessage = this.HasUserAcceptedWarningMessage(Resources.Resources.NugetUpdate_Title, Resources.Resources.NugetUpdate_Text);
+            if (userHasAcceptedWarningMessage)
             {
                 // Creates dialog informing the user to wait for the installation to finish
                 IVsThreadedWaitDialogFactory twdFactory = this.package.GetService(typeof(SVsThreadedWaitDialogFactory)) as IVsThreadedWaitDialogFactory;
