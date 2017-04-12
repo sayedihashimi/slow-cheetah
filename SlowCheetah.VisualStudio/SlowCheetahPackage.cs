@@ -612,6 +612,11 @@ namespace SlowCheetah.VisualStudio
         /// <returns>True if the project supports transformation</returns>
         private bool ProjectSupportsTransforms(IVsProject project)
         {
+            if (this.NuGetManager.ProjectSupportsNuget())
+            {
+                return true;
+            }
+
             string projectFullPath;
             if (ErrorHandler.Failed(project.GetMkDocument(VSConstants.VSITEMID_ROOT, out projectFullPath)))
             {

@@ -39,6 +39,16 @@ namespace SlowCheetah.VisualStudio
         }
 
         /// <summary>
+        /// Checks if the current project supports NuGet
+        /// </summary>
+        /// <returns>True if the project supports NuGet</returns>
+        public bool ProjectSupportsNuget()
+        {
+            // If we cannot get the installer service, NuGet is not supported
+            return GetInstallerServices(this.package) != null;
+        }
+
+        /// <summary>
         /// Checks the SlowCheetah NuGet package on current project.
         /// If no version is installed, prompts for install of latest version;
         /// if an older version is detected, shows update information.
