@@ -29,6 +29,8 @@ namespace SlowCheetah.VisualStudio
         private readonly HashSet<string> installTasks = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly object syncObject = new object();
 
+        private readonly Dictionary<Guid, bool> storedProjects = new Dictionary<Guid, bool>();
+
         /// <summary>
         /// Initializes a new instance of the <see cref="SlowCheetahNuGetManager"/> class.
         /// </summary>
@@ -41,11 +43,38 @@ namespace SlowCheetah.VisualStudio
         /// <summary>
         /// Checks if the current project supports NuGet
         /// </summary>
+        /// <param name="hierarchy">Hierarchy of the project to be verified</param>
         /// <returns>True if the project supports NuGet</returns>
-        public bool ProjectSupportsNuget()
+        public bool ProjectSupportsNuget(IVsHierarchy hierarchy)
         {
-            // If we cannot get the installer service, NuGet is not supported
-            return GetInstallerServices(this.package) != null;
+            hierarchy.GetGuidProperty(VSConstants.VSITEMID_ROOT, (int)__VSHPROPID.VSHPROPID_ProjectIDGuid, out Guid projectGuid);
+            Project currentProject = PackageUtilities.GetAutomationFromHierarchy<Project>(hierarchy, (uint)VSConstants.VSITEMID.Root);
+            if (projectGuid == null || currentProject == null)
+            {
+                return false;
+            }
+
+            if (!this.storedProjects.TryGetValue(projectGuid, out bool supportsNuget))
+            {
+                try
+                {
+                    supportsNuget = false;
+                    IVsPackageInstallerServices installerServices = GetInstallerServices(this.package);
+                    if (installerServices != null)
+                    {
+                        installerServices.GetInstalledPackages(currentProject);
+                        supportsNuget = true;
+                    }
+                }
+                catch
+                {
+                    supportsNuget = false;
+                }
+
+                this.storedProjects.Add(projectGuid, supportsNuget);
+            }
+
+            return supportsNuget;
         }
 
         /// <summary>
