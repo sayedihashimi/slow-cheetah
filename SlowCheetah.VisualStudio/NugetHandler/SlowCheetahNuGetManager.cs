@@ -52,8 +52,6 @@ namespace SlowCheetah.VisualStudio
         private readonly HashSet<string> installTasks = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly object syncObject = new object();
 
-        private readonly Dictionary<Guid, bool> storedProjects = new Dictionary<Guid, bool>();
-
         /// <summary>
         /// Initializes a new instance of the <see cref="SlowCheetahNuGetManager"/> class.
         /// </summary>
@@ -68,8 +66,16 @@ namespace SlowCheetah.VisualStudio
         /// </summary>
         /// <param name="hierarchy">Hierarchy of the project to be verified</param>
         /// <returns>True if the project supports NuGet</returns>
+        /// <remarks>This implementation is derived of the internal NuGet method IsSupported
+        /// https://github.com/NuGet/NuGet.Client/blob/dev/src/NuGet.Clients/NuGet.PackageManagement.VisualStudio/Utility/EnvDTEProjectUtility.cs#L441
+        /// This should be removed when NuGet adds this to their public API</remarks>
         public bool ProjectSupportsNuget(IVsHierarchy hierarchy)
         {
+            if (hierarchy == null)
+            {
+                throw new ArgumentNullException(nameof(hierarchy));
+            }
+
             if (SupportsINugetProjectSystem(hierarchy))
             {
                 return true;

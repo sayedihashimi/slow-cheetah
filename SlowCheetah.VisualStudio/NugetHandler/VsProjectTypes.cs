@@ -7,7 +7,7 @@ namespace SlowCheetah.VisualStudio
     /// VS project type GUIDs
     /// </summary>
     [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1600:Elements must be documented", Justification = "Static collection of GUIDs")]
-    public static class VsProjectTypes
+    internal static class VsProjectTypes
     {
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         // Project type guids
