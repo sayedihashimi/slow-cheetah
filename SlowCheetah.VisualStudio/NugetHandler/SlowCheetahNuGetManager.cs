@@ -24,6 +24,29 @@ namespace SlowCheetah.VisualStudio
         private static readonly string PackageName = Settings.Default.SlowCheetahNugetPkgName;
         private static readonly Version LastUnsupportedVersion = new Version(2, 5, 15);
 
+        // Fields for checking NuGet support
+        private static readonly Guid INuGetPackageManagerGuid = Guid.Parse("FD2DC07E-9054-4115-B86B-26A9F9C1F00B");
+        private static readonly string SupportedCapabilities = "AssemblyReferences + DeclaredSourceItems + UserSourceItems";
+        private static readonly string UnsupportedCapabilities = "SharedAssetsProject";
+        private static readonly HashSet<string> SupportedProjectTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                VsProjectTypes.WebSiteProjectTypeGuid,
+                VsProjectTypes.CsharpProjectTypeGuid,
+                VsProjectTypes.VbProjectTypeGuid,
+                VsProjectTypes.CppProjectTypeGuid,
+                VsProjectTypes.JsProjectTypeGuid,
+                VsProjectTypes.FsharpProjectTypeGuid,
+                VsProjectTypes.NemerleProjectTypeGuid,
+                VsProjectTypes.WixProjectTypeGuid,
+                VsProjectTypes.SynergexProjectTypeGuid,
+                VsProjectTypes.NomadForVisualStudioProjectTypeGuid,
+                VsProjectTypes.TDSProjectTypeGuid,
+                VsProjectTypes.DxJsProjectTypeGuid,
+                VsProjectTypes.DeploymentProjectTypeGuid,
+                VsProjectTypes.CosmosProjectTypeGuid,
+                VsProjectTypes.ManagementPackProjectTypeGuid,
+            };
+
         private readonly IServiceProvider package;
 
         private readonly HashSet<string> installTasks = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -47,34 +70,31 @@ namespace SlowCheetah.VisualStudio
         /// <returns>True if the project supports NuGet</returns>
         public bool ProjectSupportsNuget(IVsHierarchy hierarchy)
         {
-            hierarchy.GetGuidProperty(VSConstants.VSITEMID_ROOT, (int)__VSHPROPID.VSHPROPID_ProjectIDGuid, out Guid projectGuid);
-            Project currentProject = PackageUtilities.GetAutomationFromHierarchy<Project>(hierarchy, (uint)VSConstants.VSITEMID.Root);
-            if (projectGuid == null || currentProject == null)
+            if (SupportsINugetProjectSystem(hierarchy))
             {
-                return false;
+                return true;
             }
 
-            if (!this.storedProjects.TryGetValue(projectGuid, out bool supportsNuget))
+            try
             {
-                try
+                if (hierarchy.IsCapabilityMatch(SupportedCapabilities))
                 {
-                    supportsNuget = false;
-                    IVsPackageInstallerServices installerServices = GetInstallerServices(this.package);
-                    if (installerServices != null)
-                    {
-                        installerServices.GetInstalledPackages(currentProject);
-                        supportsNuget = true;
-                    }
-                }
-                catch
-                {
-                    supportsNuget = false;
+                    return true;
                 }
 
-                this.storedProjects.Add(projectGuid, supportsNuget);
+                if (hierarchy.IsCapabilityMatch(UnsupportedCapabilities))
+                {
+                    return false;
+                }
+            }
+            catch (Exception ex) when (!ErrorHandler.IsCriticalException(ex))
+            {
+                // Catch exceptions when hierarchy doesn't support the above methods
             }
 
-            return supportsNuget;
+            Project project = PackageUtilities.GetAutomationFromHierarchy<Project>(hierarchy, (uint)VSConstants.VSITEMID.Root);
+
+            return project.Kind != null && SupportedProjectTypes.Contains(project.Kind);
         }
 
         /// <summary>
@@ -137,6 +157,29 @@ namespace SlowCheetah.VisualStudio
             }
 
             return false;
+        }
+
+        private static bool SupportsINugetProjectSystem(IVsHierarchy hierarchy)
+        {
+            var vsProject = hierarchy as IVsProject;
+            if (vsProject == null)
+            {
+                return false;
+            }
+
+            vsProject.GetItemContext(
+                (uint)VSConstants.VSITEMID.Root,
+                out Microsoft.VisualStudio.OLE.Interop.IServiceProvider serviceProvider);
+            if (serviceProvider == null)
+            {
+                return false;
+            }
+
+            using (var sp = new ServiceProvider(serviceProvider))
+            {
+                var retValue = sp.GetService(INuGetPackageManagerGuid);
+                return retValue != null;
+            }
         }
 
         private bool IsSlowCheetahInstalled(Project project)
