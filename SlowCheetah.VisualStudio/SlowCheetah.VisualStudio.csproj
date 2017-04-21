@@ -47,6 +47,15 @@
     <AssemblyOriginatorKeyFile>..\Key.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="AdvancedOptionsDialogPage.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="AdvancedOptionUserControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="AdvancedOptionUserControl.Designer.cs">
+      <DependentUpon>AdvancedOptionUserControl.cs</DependentUpon>
+    </Compile>
     <Compile Include="NugetHandler\INugetPackageHandler.cs" />
     <Compile Include="NugetHandler\NugetHandlerFactory.cs" />
     <Compile Include="NugetHandler\LegacyNugetMessageHandler.cs" />
@@ -54,6 +63,12 @@
     <Compile Include="NugetHandler\SlowCheetahNuGetManager.cs" />
     <Compile Include="OptionsDialogPage.cs">
       <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="OptionUserControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="OptionUserControl.Designer.cs">
+      <DependentUpon>OptionUserControl.cs</DependentUpon>
     </Compile>
     <Compile Include="TransformationPreviewLogger.cs" />
     <Compile Include="Utilities\PackageUtilities.cs" />
@@ -240,6 +255,12 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="AdvancedOptionUserControl.resx">
+      <DependentUpon>AdvancedOptionUserControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="OptionUserControl.resx">
+      <DependentUpon>OptionUserControl.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Resources\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>

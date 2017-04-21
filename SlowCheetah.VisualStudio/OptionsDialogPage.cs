@@ -7,6 +7,7 @@ namespace SlowCheetah.VisualStudio
     using System.ComponentModel;
     using System.Diagnostics;
     using System.IO;
+    using System.Windows.Forms;
     using Microsoft.VisualStudio;
     using Microsoft.VisualStudio.Shell;
     using Microsoft.VisualStudio.Shell.Interop;
@@ -22,6 +23,7 @@ namespace SlowCheetah.VisualStudio
         private const string RegPreviewCmdLine = "PreviewCmdLine";
         private const string RegPreviewExe = "PreviewExe";
         private const string RegPreviewEnable = "EnablePreview";
+        private const string RegDependentUpon = "EnableDependentUpon";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OptionsDialogPage"/> class.
@@ -48,9 +50,22 @@ namespace SlowCheetah.VisualStudio
         public bool EnablePreview { get; set; }
 
         /// <summary>
-        /// Save our settings to the specified XML writer so they can be exported
+        /// Gets or sets a value indicating whether to add DependentUpon metadata
         /// </summary>
-        /// <param name="writer">The VsSettings writer to write our values to</param>
+        public bool AddDependentUpon { get; set; }
+
+        /// <inheritdoc/>
+        protected override IWin32Window Window
+        {
+            get
+            {
+                var optionControl = new OptionUserControl();
+                optionControl.Initialize(this);
+                return optionControl;
+            }
+        }
+
+        /// <inheritdoc/>
         public override void SaveSettingsToXml(IVsSettingsWriter writer)
         {
             try
@@ -61,6 +76,7 @@ namespace SlowCheetah.VisualStudio
                 writer.WriteSettingString(RegPreviewExe, this.PreviewToolExecutablePath);
                 writer.WriteSettingString(RegPreviewCmdLine, this.PreviewToolCommandLine);
                 writer.WriteSettingBoolean(RegPreviewEnable, this.EnablePreview ? 1 : 0);
+                writer.WriteSettingBoolean(RegDependentUpon, this.AddDependentUpon ? 1 : 0);
             }
             catch (Exception e)
             {
@@ -68,10 +84,7 @@ namespace SlowCheetah.VisualStudio
             }
         }
 
-        /// <summary>
-        /// Loads our settings to the specified XML writer
-        /// </summary>
-        /// <param name="reader">The VsSettings reader we read ou values from</param>
+        /// <inheritdoc/>
         public override void LoadSettingsFromXml(IVsSettingsReader reader)
         {
             try
@@ -90,6 +103,11 @@ namespace SlowCheetah.VisualStudio
                 if (ErrorHandler.Succeeded(reader.ReadSettingBoolean(RegPreviewEnable, out int enablePreview)))
                 {
                     this.EnablePreview = enablePreview == 1;
+                }
+
+                if (ErrorHandler.Succeeded(reader.ReadSettingBoolean(RegDependentUpon, out int addDependentUpon)))
+                {
+                    this.AddDependentUpon = addDependentUpon == 1;
                 }
             }
             catch (Exception e)
@@ -130,6 +148,12 @@ namespace SlowCheetah.VisualStudio
                             {
                                 this.EnablePreview = ((int)enablePreview) == 1;
                             }
+
+                            object addDependentUpon = cheetahKey.GetValue(RegDependentUpon);
+                            if (addDependentUpon != null && (addDependentUpon is int))
+                            {
+                                this.AddDependentUpon = ((int)addDependentUpon) == 1;
+                            }
                         }
                     }
                 }
@@ -155,6 +179,7 @@ namespace SlowCheetah.VisualStudio
                         cheetahKey.SetValue(RegPreviewExe, this.PreviewToolExecutablePath);
                         cheetahKey.SetValue(RegPreviewCmdLine, this.PreviewToolCommandLine);
                         cheetahKey.SetValue(RegPreviewEnable, this.EnablePreview ? 1 : 0);
+                        cheetahKey.SetValue(RegDependentUpon, this.AddDependentUpon ? 1 : 0);
                     }
                 }
             }
@@ -187,6 +212,7 @@ namespace SlowCheetah.VisualStudio
 
             this.PreviewToolCommandLine = "{0} {1}";
             this.EnablePreview = true;
+            this.AddDependentUpon = true;
         }
 
         /// <summary>

@@ -48,8 +48,8 @@ namespace SlowCheetah.VisualStudio
     [ProvideMenuResource("Menus.ctmenu", 1)]
     [Guid(Guids.GuidSlowCheetahPkgString)]
     [ProvideAutoLoad("{f1536ef8-92ec-443c-9ed7-fdadf150da82}")]
-    [ProvideOptionPageAttribute(typeof(OptionsDialogPage), "Slow Cheetah", "General", 100, 101, true)]
-    [ProvideProfileAttribute(typeof(OptionsDialogPage), "Slow Cheetah", "General", 100, 101, true)]
+    [ProvideOptionPage(typeof(OptionsDialogPage), "Slow Cheetah", "General", 100, 101, true)]
+    [ProvideOptionPage(typeof(AdvancedOptionsDialogPage), "Slow Cheetah", "Advanced", 100, 101, true)]
     [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
     public sealed class SlowCheetahPackage : Package, IVsUpdateSolutionEvents
     {
@@ -372,13 +372,17 @@ namespace SlowCheetah.VisualStudio
                     transformsToCreate.AddRange(publishProfileTransforms);
                 }
 
-                foreach (string config in transformsToCreate)
+                using (OptionsDialogPage optionsPage = new OptionsDialogPage())
                 {
-                    string itemName = string.Format(Resources.Resources.String_FormatTransformFilename, itemFilename, config, itemExtension);
-                    this.AddXdtTransformFile(selectedProjectItem, content, itemName, itemFolder);
-                    hierarchy.ParseCanonicalName(Path.Combine(itemFolder, itemName), out uint addedFileId);
-                    buildPropertyStorage.SetItemAttribute(addedFileId, IsTransformFile, "True");
-                    buildPropertyStorage.SetItemAttribute(addedFileId, DependentUpon, itemFilenameExtension);
+                    optionsPage.LoadSettingsFromStorage();
+
+                    foreach (string config in transformsToCreate)
+                    {
+                        string itemName = string.Format(Resources.Resources.String_FormatTransformFilename, itemFilename, config, itemExtension);
+                        this.AddXdtTransformFile(selectedProjectItem, content, itemName, itemFolder, optionsPage.AddDependentUpon);
+                        hierarchy.ParseCanonicalName(Path.Combine(itemFolder, itemName), out uint addedFileId);
+                        buildPropertyStorage.SetItemAttribute(addedFileId, IsTransformFile, "True");
+                    }
                 }
             }
         }
@@ -641,7 +645,8 @@ namespace SlowCheetah.VisualStudio
         /// <param name="content">Contents to be written to the transformation file</param>
         /// <param name="itemName">Full name of the transformation file</param>
         /// <param name="projectPath">Full path to the current project</param>
-        private void AddXdtTransformFile(ProjectItem selectedProjectItem, string content, string itemName, string projectPath)
+        /// <param name="addDepentUpon">Wheter to add the new file dependent upon the source file</param>
+        private void AddXdtTransformFile(ProjectItem selectedProjectItem, string content, string itemName, string projectPath, bool addDepentUpon)
         {
             try
             {
@@ -656,7 +661,8 @@ namespace SlowCheetah.VisualStudio
                 }
 
                 // and add it to the project
-                ProjectItem addedItem = selectedProjectItem.ProjectItems.AddFromFile(itemPath);
+                ProjectItem addedItem = addDepentUpon ? selectedProjectItem.ProjectItems.AddFromFile(itemPath)
+                                                      : selectedProjectItem.ContainingProject.ProjectItems.AddFromFile(itemPath);
 
                 // we need to set the Build Action to None to ensure that it doesn't get published for web projects
                 addedItem.Properties.Item("ItemType").Value = "None";
