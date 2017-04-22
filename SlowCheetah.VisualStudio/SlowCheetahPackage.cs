@@ -55,7 +55,6 @@ namespace SlowCheetah.VisualStudio
     {
         private static readonly string TransformOnBuild = "TransformOnBuild";
         private static readonly string IsTransformFile = "IsTransformFile";
-        private static readonly string DependentUpon = "DependentUpon";
 
         private static readonly string PkgName = Settings.Default.SlowCheetahNugetPkgName;
 
